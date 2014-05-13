@@ -5,6 +5,8 @@
 #-------------------------------------------------
 
 QT       += core gui
+QT       += network
+QT       += core
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -13,8 +15,16 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        imapgui.cpp
+        imapgui.cpp \
+    imap.cpp \
+    imapaddress.cpp \
+    imapmailbox.cpp \
+    imapmessage.cpp
 
-HEADERS  += imapgui.h
+HEADERS  += imapgui.h \
+    imap.h \
+    imapaddress.h \
+    imapmailbox.h \
+    imapmessage.h
 
 FORMS    += imapgui.ui

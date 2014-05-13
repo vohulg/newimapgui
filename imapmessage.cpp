@@ -1,5 +1,6 @@
 #include <QStringList>
-#include <QSharedData>
+#include <QDateTime>
+//#include <QSharedData>
 
 #include "imapmessage.h"
 #include "imapaddress.h"
@@ -275,14 +276,16 @@ class ImapMessagePrivate {
         ImapAddress fromAddress;
 
         ImapMessageFlags flags;
-        QDateTime received;
+        //QDateTime received;
+         QString received;
         QString reference;
         QString messageId;
         int htmlPartIndex;
         int textPartIndex;
         QString timeZone;
         QString subject;
-        QDateTime sent;
+        //QDateTime sent;
+         QString sent;
         QString uid;
         int size;
         int id;
@@ -394,28 +397,31 @@ void ImapMessage::setSubject (const QString& subject) {
     d->subject = subject;
 }
 
-QDateTime ImapMessage::sent (void) const {
+QString ImapMessage::sent (void) const {
     return(d->sent);
 }
 
 void ImapMessage::setSent (const QString& dateTime) {
-    d->sent = QDateTime::fromString(dateTime, "dd-MMM-yyyy HH:mm:ss +0000");
-}
-
-void ImapMessage::setSent (const QDateTime& dateTime) {
+    //d->sent = QDateTime::fromString(dateTime, "dd-MMM-yyyy HH:mm:ss +0000");
     d->sent = dateTime;
 }
 
-QDateTime ImapMessage::received (void) const {
+void ImapMessage::setSent (const QDateTime& dateTime) {
+    //d->sent = dateTime;
+}
+
+QString ImapMessage::received (void) const {
     return(d->received);
 }
 
 void ImapMessage::setReceived (const QString& dateTime) {
-    d->received = QDateTime::fromString(dateTime, "dd-MMM-yyyy HH:mm:ss +0000");
+
+    d->received = dateTime;
+   // d->received = QDateTime::fromString("13.11.2012 19:52:07", "dd.MM.yyyy HH:mm:ss");
 }
 
 void ImapMessage::setReceived (const QDateTime& dateTime) {
-    d->received = dateTime;
+   // d->received = dateTime;
 }
 
 QString ImapMessage::timeZone (void) const {

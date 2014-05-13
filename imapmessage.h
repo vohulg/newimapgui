@@ -87,11 +87,11 @@ class ImapMessage {
         QString subject (void) const;
         void setSubject (const QString& subject);
 
-        QDateTime sent (void) const;
+        QString sent (void) const;
         void setSent (const QString& dateTime);
         void setSent (const QDateTime& dateTime);
 
-        QDateTime received (void) const;
+        QString received (void) const;
         void setReceived (const QString& dateTime);
         void setReceived (const QDateTime& dateTime);
 

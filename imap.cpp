@@ -38,6 +38,7 @@ static ImapMessage *_imapParseMessage (const QString& responseText) {
     QRegExp regexMessageId("\"<([^>]+)>\"\\)\\)");
     QRegExp regexFlags("\\(FLAGS \\(([^\\)]*)\\)");
     QRegExp regexInternalDate("INTERNALDATE \"([^\"]+)\"");
+    QRegExp regexSentDate("ENVELOPE \(\"([^\"]+)\"");
     QRegExp regexSize("RFC822.SIZE (\\d+)");
     QRegExp regexEnvelope("ENVELOPE");   
 
@@ -50,13 +51,17 @@ static ImapMessage *_imapParseMessage (const QString& responseText) {
         message->setReceived(regexInternalDate.cap(1));
     if (regexSize.indexIn(response) != -1)
         message->setSize(regexSize.cap(1).toInt());
-    
+
+
     if (regexEnvelope.indexIn(response) != -1) {
         int rmSize = regexEnvelope.pos() + regexEnvelope.matchedLength();
         response = response.remove(0, rmSize);
     }
- 
-    QRegExp regexSent("\(\"(?:\\w{3}\\, )?([^\"]+)\"");
+
+
+    QRegExp regexSent("\"([^\"]+)\"");
+
+   // QRegExp regexSent("\(\"(?:\\w{3}\\, )?([^\"]+)\"");
     if (regexSent.indexIn(response) != -1) {
         QRegExp subRegex("([\\-\\+]\\d{4}.*|NIL.*)");
         subRegex.indexIn(regexSent.cap(1));
@@ -871,7 +876,7 @@ ImapMailbox *Imap::fetch (ImapMailbox *mailbox, const QList<int>& messages) {
         messageList += QString("%1,").arg(messageNr);
     messageList.remove(messageList.size() - 1, 1);
     
-    if (!d->sendCommand(QString("FETCH %1 ALL").arg(messageList)))
+    if (!d->sendCommand(QString("FETCH %1 FULL").arg(messageList)))
         return(NULL);
 
     return(d->parseMessages(mailbox));
