@@ -503,6 +503,7 @@ QByteArray Imap::decode (const QByteArray& text) {
         if (method == "b") {
             output += QByteArray::fromBase64(data.toLatin1());
 
+
         } else if (!data.isEmpty()) {
             bool ok;
             for (int i = 0; i < data.size(); ++i) {

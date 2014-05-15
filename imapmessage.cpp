@@ -120,8 +120,9 @@ ImapMessageBodyPart::Encoding ImapMessageBodyPartPrivate::parseEncoding (
             return(ImapMessageBodyPart::Utf7Encoding);
         case '8':
             if (data.indexOf("BIT", 1) == 1)
-                return(ImapMessageBodyPart::UnknownEncoding);
-            return(ImapMessageBodyPart::Utf8Encoding);
+                return(ImapMessageBodyPart::Utf8Encoding);
+            return(ImapMessageBodyPart::UnknownEncoding);
+
         case 'B':
             if (data.startsWith("BASE64"))
                 return(ImapMessageBodyPart::Base64Encoding);

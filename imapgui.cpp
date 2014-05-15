@@ -17,6 +17,8 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+// ---------------- start parse imap ---------------------------- //
+
  bool MainWindow::startImap()
  {
      Imap imap;
@@ -29,7 +31,7 @@ MainWindow::~MainWindow()
     // qDebug() << imap.list();
      ;
 
-     ImapMailbox *mailbox = imap.select("MyFoldr");
+     ImapMailbox *mailbox = imap.select("INBOX");
      if (mailbox == NULL)
          IMAP_MAIN_ABORT("select()", imap.errorString());
 
