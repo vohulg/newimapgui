@@ -7,9 +7,39 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-   // testing();
+   //--------------inizializ database-------------//
+    db =  QSqlDatabase::addDatabase("QSQLITE");
+    db.setDatabaseName("dbImap.sqlite");
+    bool res;
 
-    startImap();
+    res = db.open();
+    //db.close();
+
+    QSqlQuery query3(db);
+
+     res = query3.exec("INSERT INTO list (account, password) "
+                  "VALUES ('Thad dапвапв', '12312312')");
+
+
+
+    //-------------------------------------------//
+
+
+    // testing();
+
+    Imap::LoginType loginType = Imap::LoginPlain;
+    QString password = "testtest";
+     QString username = "testov-79@mail.ru";
+    QString host = "imap.mail.ru";
+    quint16 port = 993;
+    bool useSsl = true;
+
+    query.prepare("INSERT INTO mail-list (account, password)" "VALUES (:account, :password)");
+    query.bindValue(":account", username);
+    query.bindValue(":password", password);
+    query.exec();
+
+    //startImap(host, port, useSsl, username, password, loginType);
 }
 
 MainWindow::~MainWindow()
@@ -17,18 +47,18 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-// ---------------- start parse imap ---------------------------- //
+// ---------------- start download message from mailbox by imap protocol ---------------------------- //
 
- bool MainWindow::startImap()
+ bool MainWindow::startImap(const QString& host, quint16 port, bool useSsl, const QString& username, const QString& password, Imap::LoginType loginType)
  {
-     Imap imap;
-     if (!imap.connectToHost(IMAP_HOST, IMAP_PORT, IMAP_USE_SSL))
+
+     if (!imap.connectToHost(host, port, useSsl))
          IMAP_MAIN_ABORT("connectToHost()", imap.errorString());
 
-     if (!imap.login(IMAP_USERNAME, IMAP_PASSWORD, IMAP_LOGIN_TYPE))
+     if (!imap.login(username, password, loginType ))
          IMAP_MAIN_ABORT("login()", imap.errorString());
 
-    // qDebug() << imap.list();
+     //qDebug() << imap.list();
      ;
 
      ImapMailbox *mailbox = imap.select("INBOX");
@@ -56,53 +86,8 @@ MainWindow::~MainWindow()
          IMAP_MAIN_ABORT("fetch()", imap.errorString());
 
 
-    foreach (int msgId, messageList) {
-         ImapMessage *message = mailbox->findById(msgId);
-         if (message == NULL) {
-             qDebug() << "Message" << msgId << "Not Found.";
-             continue;
-         }
-
-         if (!imap.fetchBodyStructure(message))
-             IMAP_MAIN_ABORT("fetchBodyStructure()", imap.errorString());
-
-         qDebug() << "ID" << message->id()
-                  << "UID" << message->uid()
-                  << "REF" << message->reference();
-         qDebug() << "FROM" << message->fromAddress().toString();
-         foreach (ImapAddress address, message->toAddresses())
-             qDebug() << " - TO" << address.toString();
-         foreach (ImapAddress address, message->ccAddresses())
-             qDebug() << " - CC" << address.toString();
-         foreach (ImapAddress address, message->bccAddresses())
-             qDebug() << " - BCC" << address.toString();
-         qDebug() << "SUBJECT" << message->subject();
-         qDebug() << "RECIEVED" << message->received();
-         qDebug() << "SENT" << message->sent();
-         qDebug() << "TIMEZONE" << message->timeZone();
-
-
-        //ui->textBrowser->setText();
-
-
-
-
-         for (int i = 0; i < message->bodyPartCount(); ++i) {
-             ImapMessageBodyPart *bodyPart = message->bodyPartAt(i);
-
-             qDebug() << bodyPart->isAttachment() << bodyPart->bodyPart()
-                      << bodyPart->fileName() << bodyPart->encoding() << bodyPart->contentType();
-
-             if (!imap.fetchBodyPart(message, i))
-                 IMAP_MAIN_ABORT("fetchBodyPart()", imap.errorString());
-
-             //imap.setSeen(message->id(), true);
-             qDebug() << bodyPart->data();
-             qDebug() << "=======================================================";
-
-             ui->lineEditSubject->setText(bodyPart->data());
-         }
-     }
+     if (!saveToDataBase(mailbox, messageList))
+          qDebug() << "Don't saved new messagу in mailbox";
 
 
      // Detroy Mailbox.
@@ -117,10 +102,61 @@ MainWindow::~MainWindow()
      return true;
  }
 
-void MainWindow::on_pushButton_clicked()
-{
-    startImap();
-}
+ //----------------- save to database-------------------//
+
+ bool MainWindow::saveToDataBase(ImapMailbox *mailbox, const QList<int>& messageList)
+ {
+
+
+     foreach (int msgId, messageList) {
+          ImapMessage *message = mailbox->findById(msgId);
+          if (message == NULL) {
+              qDebug() << "Message" << msgId << "Not Found.";
+              continue;
+          }
+
+          if (!imap.fetchBodyStructure(message))
+              IMAP_MAIN_ABORT("fetchBodyStructure()", imap.errorString());
+
+          qDebug() << "ID" << message->id()
+                   << "UID" << message->uid()
+                   << "REF" << message->reference();
+          qDebug() << "FROM" << message->fromAddress().toString();
+          foreach (ImapAddress address, message->toAddresses())
+              qDebug() << " - TO" << address.toString();
+          foreach (ImapAddress address, message->ccAddresses())
+              qDebug() << " - CC" << address.toString();
+          foreach (ImapAddress address, message->bccAddresses())
+              qDebug() << " - BCC" << address.toString();
+          qDebug() << "SUBJECT" << message->subject();
+          qDebug() << "RECIEVED" << message->received();
+          qDebug() << "SENT" << message->sent();
+          qDebug() << "TIMEZONE" << message->timeZone();
+
+
+                 for (int i = 0; i < message->bodyPartCount(); ++i) {
+              ImapMessageBodyPart *bodyPart = message->bodyPartAt(i);
+
+              qDebug() << bodyPart->isAttachment() << bodyPart->bodyPart()
+                       << bodyPart->fileName() << bodyPart->encoding() << bodyPart->contentType();
+
+              if (!imap.fetchBodyPart(message, i))
+                  IMAP_MAIN_ABORT("fetchBodyPart()", imap.errorString());
+
+              //imap.setSeen(message->id(), true);
+              qDebug() << bodyPart->data();
+              qDebug() << "=======================================================";
+
+
+          }
+      }
+
+     return true;
+
+ }
+
+
+// ---------------- function for testing ---------------------------- //
 
 void MainWindow::testing()
 {
