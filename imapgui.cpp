@@ -7,37 +7,17 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-   //--------------inizializ database-------------//
-    db =  QSqlDatabase::addDatabase("QSQLITE");
-    db.setDatabaseName("dbImap.sqlite");
-    bool res;
+   if (!connectDatabase("dbImap.sqlite"))
+      qDebug() << "database not connected";
 
-    res = db.open();
-    //db.close();
+   dialog = new AddAcount();
+   QObject::connect(dialog , SIGNAL(sigRefreshTable()),this, SLOT(RefreshAccountsList()));
 
-    QSqlQuery query3(db);
-
-     res = query3.exec("INSERT INTO list (account, password) "
-                  "VALUES ('Thad dапвапв', '12312312')");
-
-
-
-    //-------------------------------------------//
-
+   RefreshAccountsList();
 
     // testing();
 
-    Imap::LoginType loginType = Imap::LoginPlain;
-    QString password = "testtest";
-     QString username = "testov-79@mail.ru";
-    QString host = "imap.mail.ru";
-    quint16 port = 993;
-    bool useSsl = true;
 
-    query.prepare("INSERT INTO mail-list (account, password)" "VALUES (:account, :password)");
-    query.bindValue(":account", username);
-    query.bindValue(":password", password);
-    query.exec();
 
     //startImap(host, port, useSsl, username, password, loginType);
 }
@@ -45,7 +25,70 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     delete ui;
+    delete dialog;
 }
+
+bool MainWindow::connectDatabase(const QString& database)
+{
+
+     db =  QSqlDatabase::addDatabase("QSQLITE");
+     db.setDatabaseName(database);
+     bool res = true;
+
+     res = db.open();
+     if (!res)
+         return false;
+     return true;
+}
+
+ bool MainWindow::RefreshAccountsList() //refresh
+ {
+    bool res = false;
+
+
+    ui->tableWidgetListAccounts->setSelectionMode(QAbstractItemView::SingleSelection);
+    ui->tableWidgetListAccounts->setSelectionBehavior(QAbstractItemView::SelectRows);
+
+     ui->tableWidgetListAccounts->setColumnCount(2);
+     ui->tableWidgetListAccounts->setColumnWidth(0,50);
+     ui->tableWidgetListAccounts->setColumnWidth(1,200);
+     ui->tableWidgetListAccounts->setHorizontalHeaderItem(0, new QTableWidgetItem(tr("ID")));
+     ui->tableWidgetListAccounts->setHorizontalHeaderItem(1, new QTableWidgetItem(tr("Account")));
+
+
+     int n = ui->tableWidgetListAccounts->rowCount();
+          for( int i = 0; i < n; i++ ) ui->tableWidgetListAccounts->removeRow( 0 );
+
+          QSqlQuery query(db);
+          res = query.exec("SELECT * FROM accounts;");
+
+          while (query.next())
+          {
+               ui->tableWidgetListAccounts->insertRow(0);
+               ui->tableWidgetListAccounts->setItem(0, 0, new QTableWidgetItem(query.value(0).toString()));
+               ui->tableWidgetListAccounts->setItem(0, 1, new QTableWidgetItem(query.value(1).toString()));
+               ui->tableWidgetListAccounts->setRowHeight(0, 20);
+          }
+
+/*
+     Imap::LoginType loginType = Imap::LoginPlain;
+     QString password = "testtest";
+     QString username = "testov-79@mail.ru";
+     QString host = "imap.mail.ru";
+     quint16 port = 993;
+     bool useSsl = true;
+
+     QSqlQuery query(db);
+     query.prepare("INSERT INTO list (account, password)" "VALUES (:account, :password)");
+     query.bindValue(":account", username);
+     query.bindValue(":password", password);
+     res = query.exec();
+
+     */
+
+     return true;
+ }
+
 
 // ---------------- start download message from mailbox by imap protocol ---------------------------- //
 
@@ -190,7 +233,12 @@ void MainWindow::testing()
       //-------------------------------//
 
 
+}
 
+void MainWindow::on_buttonAdd_clicked()
+{
 
+    dialog->show();
+    dialog->setDatabase(db);
 
 }

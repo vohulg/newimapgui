@@ -20,12 +20,15 @@ SOURCES += main.cpp\
     imap.cpp \
     imapaddress.cpp \
     imapmailbox.cpp \
-    imapmessage.cpp
+    imapmessage.cpp \
+    addacount.cpp
 
 HEADERS  += imapgui.h \
     imap.h \
     imapaddress.h \
     imapmailbox.h \
-    imapmessage.h
+    imapmessage.h \
+    addacount.h
 
-FORMS    += imapgui.ui
+FORMS    += imapgui.ui \
+    addacount.ui
