@@ -14,6 +14,7 @@
 #include "imapaddress.h"
 #include "imap.h"
 #include "addacount.h"
+#include "tmonitoring.h"
 
 #define IMAP_MAIN_ABORT(func, message)     \
     { qDebug() << func << message; return(1); }
@@ -30,10 +31,8 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
-
 signals:
     void sigShowItemForChange();
-
 
 private slots:
     bool RefreshAccountsList();
@@ -52,9 +51,7 @@ private:
     Imap imap;
     QTableWidget *tableWidget;
     AddAcount *dialog;
-
-
-
+    TMonitoring *monitorLoop;
 
 };
 

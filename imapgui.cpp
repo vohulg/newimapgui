@@ -14,6 +14,14 @@ MainWindow::MainWindow(QWidget *parent) :
    QObject::connect(dialog , SIGNAL(sigRefreshTable()),this, SLOT(RefreshAccountsList()));
    QObject::connect(this , SIGNAL(sigShowItemForChange()),dialog, SLOT(showItemForChange()));
 
+   //======== start loop for monitoring================//
+
+   monitorLoop = new TMonitoring();
+   monitorLoop->setDatabase(db);
+   monitorLoop->run();
+
+   //==================================================//
+
 
    RefreshAccountsList();
 
@@ -88,11 +96,6 @@ bool MainWindow::connectDatabase(const QString& database)
      quint16 port = 993;
      bool useSsl = true;
 
-     QSqlQuery query(db);
-     query.prepare("INSERT INTO list (account, password)" "VALUES (:account, :password)");
-     query.bindValue(":account", username);
-     query.bindValue(":password", password);
-     res = query.exec();
 
      */
 
