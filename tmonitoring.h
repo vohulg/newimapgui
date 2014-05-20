@@ -25,6 +25,7 @@ public slots:
 private:
     Imap imap;
     QSqlDatabase dataBase;
+    bool checkNewFolder(const QString& id, QStringList& currentListMailBox);
 
 
 
