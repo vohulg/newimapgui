@@ -12,6 +12,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
    dialog = new AddAcount();
    QObject::connect(dialog , SIGNAL(sigRefreshTable()),this, SLOT(RefreshAccountsList()));
+   QObject::connect(this , SIGNAL(sigShowItemForChange()),dialog, SLOT(showItemForChange()));
+
 
    RefreshAccountsList();
 
@@ -49,24 +51,32 @@ bool MainWindow::connectDatabase(const QString& database)
     ui->tableWidgetListAccounts->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->tableWidgetListAccounts->setSelectionBehavior(QAbstractItemView::SelectRows);
 
-     ui->tableWidgetListAccounts->setColumnCount(2);
+     ui->tableWidgetListAccounts->setColumnCount(5);
      ui->tableWidgetListAccounts->setColumnWidth(0,50);
      ui->tableWidgetListAccounts->setColumnWidth(1,200);
+     ui->tableWidgetListAccounts->setColumnWidth(2,150);
+     ui->tableWidgetListAccounts->setColumnWidth(3,150);
      ui->tableWidgetListAccounts->setHorizontalHeaderItem(0, new QTableWidgetItem(tr("ID")));
      ui->tableWidgetListAccounts->setHorizontalHeaderItem(1, new QTableWidgetItem(tr("Account")));
+     ui->tableWidgetListAccounts->setHorizontalHeaderItem(2, new QTableWidgetItem(tr("Start Monitor")));
+     ui->tableWidgetListAccounts->setHorizontalHeaderItem(3, new QTableWidgetItem(tr("End Monitor")));
+     ui->tableWidgetListAccounts->setHorizontalHeaderItem(4, new QTableWidgetItem(tr("Activ")));
 
 
      int n = ui->tableWidgetListAccounts->rowCount();
           for( int i = 0; i < n; i++ ) ui->tableWidgetListAccounts->removeRow( 0 );
 
           QSqlQuery query(db);
-          res = query.exec("SELECT * FROM accounts;");
+          res = query.exec("SELECT id, account, startMonitor, endMonitor, status FROM accounts;");
 
           while (query.next())
           {
                ui->tableWidgetListAccounts->insertRow(0);
                ui->tableWidgetListAccounts->setItem(0, 0, new QTableWidgetItem(query.value(0).toString()));
                ui->tableWidgetListAccounts->setItem(0, 1, new QTableWidgetItem(query.value(1).toString()));
+               ui->tableWidgetListAccounts->setItem(0, 2, new QTableWidgetItem(query.value(2).toDateTime().toString()));
+               ui->tableWidgetListAccounts->setItem(0, 3, new QTableWidgetItem(query.value(3).toDateTime().toString()));
+               ui->tableWidgetListAccounts->setItem(0, 4, new QTableWidgetItem(query.value(4).toString()));
                ui->tableWidgetListAccounts->setRowHeight(0, 20);
           }
 
@@ -240,5 +250,16 @@ void MainWindow::on_buttonAdd_clicked()
 
     dialog->show();
     dialog->setDatabase(db);
+
+}
+
+void MainWindow::on_butChange_clicked()
+{
+    QList<QTableWidgetItem *> list;
+    list = ui->tableWidgetListAccounts->selectedItems();
+    QString item = list[0]->text();
+    dialog->setItemForChange(item);
+    emit sigShowItemForChange();
+    dialog->show();
 
 }

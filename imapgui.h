@@ -29,31 +29,33 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
-    bool startImap(const QString& host, quint16 port, bool useSsl, const QString& username, const QString& password, Imap::LoginType loginType );
 
 
 signals:
-   // sigRefreshTable();
+    void sigShowItemForChange();
 
-private slots:
-
-
-    void on_buttonAdd_clicked();
-
-private:
-    Ui::MainWindow *ui;
-    void testing();
-    QSqlDatabase db;
-    QSqlQuery query;
-    bool saveToDataBase(ImapMailbox *mailbox, const QList<int>& messages);
-    Imap imap;
-
-    bool connectDatabase(const QString& database);
-    QTableWidget *tableWidget;
-    AddAcount *dialog;
 
 private slots:
     bool RefreshAccountsList();
+
+    bool connectDatabase(const QString& database);
+    bool saveToDataBase(ImapMailbox *mailbox, const QList<int>& messages);
+    bool startImap(const QString& host, quint16 port, bool useSsl, const QString& username, const QString& password, Imap::LoginType loginType );
+    void on_butChange_clicked();
+    void on_buttonAdd_clicked();
+    void testing();
+
+private:
+    Ui::MainWindow *ui;
+    QSqlDatabase db;
+    QSqlQuery query;
+    Imap imap;
+    QTableWidget *tableWidget;
+    AddAcount *dialog;
+
+
+
+
 };
 
 #endif // IMAPGUI_H

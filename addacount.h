@@ -3,6 +3,8 @@
 
 #include <QDialog>
 #include <QtSql>
+#include <QTableWidget>
+#include <QString>
 
 
 namespace Ui {
@@ -17,6 +19,7 @@ public:
     explicit AddAcount(QWidget *parent = 0 );
     ~AddAcount();
      bool setDatabase (QSqlDatabase &db);
+     void setItemForChange(QString itemForChangeIn);
 
 signals:
     bool sigRefreshTable();
@@ -24,10 +27,13 @@ signals:
 
 private slots:
     bool on_buttonBox_accepted();
+    void showItemForChange();
+
 
 private:
     Ui::AddAcount *uiAdd;
     QSqlDatabase dataBase;
+    QString ItemForChange;
 
 };
 
