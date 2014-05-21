@@ -16,6 +16,8 @@
 #include "addacount.h"
 #include "tmonitoring.h"
 
+
+
 #define IMAP_MAIN_ABORT(func, message)     \
     { qDebug() << func << message; return(1); }
 
@@ -43,6 +45,7 @@ private slots:
     void on_butChange_clicked();
     void on_buttonAdd_clicked();
     void testing();
+    void createTableDataBase();
 
 private:
     Ui::MainWindow *ui;
@@ -52,6 +55,7 @@ private:
     QTableWidget *tableWidget;
     AddAcount *dialog;
     TMonitoring *monitorLoop;
+    QString dataBaseName;
 
 };
 
