@@ -4,6 +4,8 @@
 #include <QThread>
 #include <QtSql>
 
+
+
 #include "imapmailbox.h"
 #include "imapmessage.h"
 #include "imapaddress.h"
@@ -22,10 +24,13 @@ signals:
 public slots:
     void run();
 
+private slots:
+    bool checkNewFolder(const QString& id, QStringList& currentListMailBox);
+
 private:
     Imap imap;
     QSqlDatabase dataBase;
-    bool checkNewFolder(const QString& id, QStringList& currentListMailBox);
+    QStringList listMailBox;
 
 
 

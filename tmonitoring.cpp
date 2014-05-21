@@ -21,7 +21,7 @@ void TMonitoring::run()
     Imap::LoginType loginType = Imap::LoginPlain;
     //============================================//
 
-    QSqlQuery query();
+    QSqlQuery query;
     query.exec("SELECT id, account, password, startMonitor, endMonitor, status FROM accounts;");
 
     while (query.next())
@@ -31,22 +31,34 @@ void TMonitoring::run()
         QString password = query.value(2).toString();
 
         if (!imap.connectToHost(host, port, useSsl))
-            IMAP_MAIN_ABORT("connectToHost()", imap.errorString());
+            qDebug() << "not connected to server";
+            //IMAP_MAIN_ABORT("connectToHost()", imap.errorString());
 
         if (!imap.login(username, password, loginType ))
-            IMAP_MAIN_ABORT("login()", imap.errorString());
+            qDebug() << "not connected to mailbox";
+            //IMAP_MAIN_ABORT("login()", imap.errorString());
 
         //-------получаем список ящиков для аккаунта---------//
-        QStringlist listMailBox = imap.list();
+        listMailBox = imap.list();
 
         if (!checkNewFolder(id, listMailBox))
             qDebug() << "folder not checked";
 
-        // QStringlist boxlist = getFolderList();
 
-        // foreach (QString box, boxlist) {
-    //
-    //}
+        //=====get message from
+         foreach (QString box, listMailBox)
+         {
+             ImapMailbox *mailbox = imap.select(box);
+             if (mailbox == NULL)
+                  qDebug() << box <<" not selected";
+
+             QList<int> messageList = imap.searchALL();
+             qDebug() << box << " messageList:" << messageList;
+
+
+         }
+
+
 
 
 
@@ -55,26 +67,59 @@ void TMonitoring::run()
 
     bool TMonitoring::checkNewFolder(const QString& accountId, QStringList& currentListMailBox)
     {
-        QSqlQuery query();
-        QString cmd = QString("SELECT folderName FROM folderMap WHERE id = %1;").arg(accountId);
-        query.exec(cmd);
 
-        while (query.next())
+        bool res = false;
+        QSqlQuery query;
+        QString cmd = QString("SELECT folderName FROM folderMap WHERE accountId = %1;").arg(accountId);
+        res = query.exec(cmd);
+
+        if (!query.next()) // no folder in database for this account
+              qDebug() << "no folder in database for this account";
+
+        else
         {
-            QString folderName = query().value(0).toString();
-
-            if (currentListMailBox.contains(folderName))
+            query.previous();
+            while (query.next())
+            {
+                QString folderName = query.value(0).toString();
+                if (currentListMailBox.contains(folderName))
+                {
+                    currentListMailBox.removeOne(folderName);
                     continue;
+                }
 
-             QSqlQuery queryAddFolder();
-             cmd = QString("INSERT INTO folderMap(accointId, folderName) VALUES (:accountId, :folderName ) ;";
-             queryAddFolder().prepare(cmd);
-             queryAddFolder().bindValue(":accountId", accountId);
-             queryAddFolder().bindValue(":folderName", folderName);
-             queryAddFolder().exec();
+                else
+                {
+                    currentListMailBox << folderName;
+
+                }
+            }
+
+        }
+
+        foreach (QString box, currentListMailBox)
+        {
+            QSqlQuery queryAddFolder;
+            cmd = "INSERT INTO folderMap(accountId, folderName) VALUES (:accountId, :folderName );";
+            queryAddFolder.prepare(cmd);
+            queryAddFolder.bindValue(":accountId", accountId);
+            queryAddFolder.bindValue(":folderName", box);
+            res = queryAddFolder.exec();
 
 
         }
+
+
+        //====== get list mailbox from database after writing new folder ===//
+
+        cmd = QString("SELECT folderName FROM folderMap WHERE accountId = %1;").arg(accountId);
+        res = query.exec(cmd);
+        listMailBox.clear();
+        while (query.next())
+        {
+            listMailBox << query.value(0).toString();
+        }
+
 
     return true;
 

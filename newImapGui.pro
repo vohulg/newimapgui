@@ -34,3 +34,6 @@ HEADERS  += imapgui.h \
 
 FORMS    += imapgui.ui \
     addacount.ui
+
+OTHER_FILES += \
+    README.txt
