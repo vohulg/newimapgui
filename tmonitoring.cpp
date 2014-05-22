@@ -41,6 +41,8 @@ void TMonitoring::run()
         //-------получаем список ящиков для аккаунта---------//
         listMailBox = imap.list();
 
+        //listMailBox << "INPUT" << "MyFoldr";
+
         if (!checkNewFolder(id, listMailBox))
             qDebug() << "folder not checked";
 
@@ -54,7 +56,6 @@ void TMonitoring::run()
 
              QList<int> messageList = imap.searchALL();
              qDebug() << box << " messageList:" << messageList;
-
 
          }
 
