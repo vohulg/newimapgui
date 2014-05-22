@@ -7,7 +7,14 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-   if (!connectDatabase("dbImap.sqlite"))
+    dataBaseName = "dbImap.sqlite";
+
+    //===== check if databas not exists create database and all tables======//
+    QFile file(dataBaseName);
+    if(!file.exists())
+        createTableDataBase();
+
+   if (!connectDatabase(dataBaseName))
       qDebug() << "database not connected";
 
    dialog = new AddAcount();
@@ -36,6 +43,19 @@ MainWindow::~MainWindow()
 {
     delete ui;
     delete dialog;
+}
+
+void MainWindow::createTableDataBase()
+{
+    if (!connectDatabase(dataBaseName))
+       qDebug() << "database not connected";
+
+    QSqlQuery query;
+    query.exec("CREATE TABLE folderMap (id INTEGER PRIMARY KEY AUTOINCREMENT, accountId INTEGER, folderName TEXT)");
+    query.exec("CREATE TABLE accounts (id INTEGER PRIMARY KEY AUTOINCREMENT, account TEXT, password TEXT, startMonitor TIMESTAMP, endMonitor TIMESTAMP, status BOOL )");
+
+
+
 }
 
 bool MainWindow::connectDatabase(const QString& database)
