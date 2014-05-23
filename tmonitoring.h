@@ -26,6 +26,7 @@ public slots:
 
 private slots:
     bool checkNewFolder(const QString& id, QStringList& currentListMailBox);
+    bool saveToDataBase(ImapMailbox *mailbox, const QList<int>& messageList);
 
 private:
     Imap imap;

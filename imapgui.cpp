@@ -55,6 +55,10 @@ void MainWindow::createTableDataBase()
     QSqlQuery query;
     query.exec("CREATE TABLE folderMap (id INTEGER PRIMARY KEY AUTOINCREMENT, accountId INTEGER, folderName TEXT)");
     query.exec("CREATE TABLE accounts (id INTEGER PRIMARY KEY AUTOINCREMENT, account TEXT, password TEXT, startMonitor TIMESTAMP, endMonitor TIMESTAMP, status BOOL )");
+    query.exec("CREATE TABLE headers (id INTEGER PRIMARY KEY AUTOINCREMENT, accountId INTEGER, bcc TEXT,"
+              "cc TEXT, flags TEXT, htmlpart TEXT, folderId INTEGER,
+               "from TEXT, subject TEXT, copyTo TEXT, recieved TIMESTAMP, created TIMESTAMP,
+               "UID TEXT, )");
 
 
 
@@ -110,17 +114,6 @@ bool MainWindow::connectDatabase(const QString& database)
                ui->tableWidgetListAccounts->setRowHeight(0, 20);
           }
 
-/*
-     Imap::LoginType loginType = Imap::LoginPlain;
-     QString password = "testtest";
-     QString username = "testov-79@mail.ru";
-     QString host = "imap.mail.ru";
-     quint16 port = 993;
-     bool useSsl = true;
-
-
-     */
-
      return true;
  }
 
@@ -137,7 +130,7 @@ bool MainWindow::connectDatabase(const QString& database)
          IMAP_MAIN_ABORT("login()", imap.errorString());
 
      //qDebug() << imap.list();
-     ;
+
 
      ImapMailbox *mailbox = imap.select("INBOX");
      if (mailbox == NULL)

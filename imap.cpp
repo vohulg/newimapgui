@@ -338,7 +338,11 @@ ImapMailbox *ImapPrivate::parseMailbox (const QString& mailboxName) {
     QByteArray response = readLine();
     //QByteArray response = socket->readAll().data();
 
+<<<<<<< HEAD
     if (response.startsWith(IMAP_TAG) || response.startsWith("*")) {
+=======
+    if (response.startsWith(IMAP_TAG) ||  response.startsWith('*')) {
+>>>>>>> 6e8e31991256ce230e28017899865be52b55e0bc
         QRegExp regexUnseen("\\[UNSEEN (\\d+)\\]");
         QRegExp regexExists("(\\d+) EXISTS");
         QRegExp regexRecent("(\\d+) RECENT");

@@ -41,11 +41,14 @@ void TMonitoring::run()
         //-------получаем список ящиков для аккаунта---------//
         listMailBox = imap.list();
 
+        //listMailBox << "INPUT" << "MyFoldr";
+
         if (!checkNewFolder(id, listMailBox))
             qDebug() << "folder not checked";
 
 
         //=====get message from
+
          foreach (QString box, listMailBox)
          {
              ImapMailbox *mailbox = imap.select(box);
@@ -56,16 +59,81 @@ void TMonitoring::run()
              qDebug() << box << " messageList:" << messageList;
 
 
+
+             if (imap.fetch(mailbox, messageList) == NULL)
+                 qDebug() << box <<" not fetched";
+
+             if (!saveToDataBase(mailbox, messageList))
+                  qDebug() << "Don't saved new messagу in mailbox";
+
+
+             // Detroy Mailbox.
+             delete mailbox;
+
+
          }
-
-
-
-
 
 }
  }
 
-    bool TMonitoring::checkNewFolder(const QString& accountId, QStringList& currentListMailBox)
+
+//----------------- save to database-------------------//
+
+bool TMonitoring::saveToDataBase(ImapMailbox *mailbox, const QList<int>& messageList)
+{
+
+
+    foreach (int msgId, messageList) {
+         ImapMessage *message = mailbox->findById(msgId);
+         if (message == NULL) {
+             qDebug() << "Message" << msgId << "Not Found.";
+             continue;
+         }
+
+         if (!imap.fetchBodyStructure(message))
+              qDebug() << "fetchBodyStructure() not worked";
+
+
+         qDebug() << "ID" << message->id()
+                  << "UID" << message->uid()
+                  << "REF" << message->reference();
+         qDebug() << "FROM" << message->fromAddress().toString();
+         foreach (ImapAddress address, message->toAddresses())
+             qDebug() << " - TO" << address.toString();
+         foreach (ImapAddress address, message->ccAddresses())
+             qDebug() << " - CC" << address.toString();
+         foreach (ImapAddress address, message->bccAddresses())
+             qDebug() << " - BCC" << address.toString();
+         qDebug() << "SUBJECT" << message->subject();
+         qDebug() << "RECIEVED" << message->received();
+         qDebug() << "SENT" << message->sent();
+         qDebug() << "TIMEZONE" << message->timeZone();
+
+
+                for (int i = 0; i < message->bodyPartCount(); ++i) {
+             ImapMessageBodyPart *bodyPart = message->bodyPartAt(i);
+
+             qDebug() << bodyPart->isAttachment() << bodyPart->bodyPart()
+                      << bodyPart->fileName() << bodyPart->encoding() << bodyPart->contentType();
+
+             if (!imap.fetchBodyPart(message, i))
+                qDebug() << "fetchBodyPart not worked";
+
+             //imap.setSeen(message->id(), true);
+             qDebug() << bodyPart->data();
+             qDebug() << "=======================================================";
+
+
+         }
+     }
+
+    return true;
+
+}
+
+
+
+bool TMonitoring::checkNewFolder(const QString& accountId, QStringList& currentListMailBox)
     {
 
         bool res = false;
