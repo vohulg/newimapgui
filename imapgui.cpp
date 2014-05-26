@@ -14,8 +14,15 @@ MainWindow::MainWindow(QWidget *parent) :
     if(!file.exists())
         createTableDataBase();
 
+    createTableDataBase();
+
    if (!connectDatabase(dataBaseName))
       qDebug() << "database not connected";
+
+  // QSqlQuery query;
+  // bool res = false;
+ //  res =  query.exec("CREATE TABLE header (id INTEGER PRIMARY KEY AUTOINCREMENT, accountId INTEGER, bcc TEXT, cc TEXT, flags TEXT, htmlpart TEXT, folderId INTEGER, from TEXT, subject TEXT, copyTo TEXT )");
+
 
    dialog = new AddAcount();
    QObject::connect(dialog , SIGNAL(sigRefreshTable()),this, SLOT(RefreshAccountsList()));
@@ -47,20 +54,21 @@ MainWindow::~MainWindow()
 
 void MainWindow::createTableDataBase()
 {
+    bool res = false;
+
     if (!connectDatabase(dataBaseName))
        qDebug() << "database not connected";
 
     QSqlQuery query;
-    query.exec("CREATE TABLE folderMap (id INTEGER PRIMARY KEY AUTOINCREMENT, accountId INTEGER, folderName TEXT)");
-    query.exec("CREATE TABLE accounts (id INTEGER PRIMARY KEY AUTOINCREMENT, account TEXT, password TEXT, startMonitor TIMESTAMP, endMonitor TIMESTAMP, status BOOL )");
-    query.exec("CREATE TABLE headers (id INTEGER PRIMARY KEY AUTOINCREMENT, accountId INTEGER, bcc TEXT,"
-              "cc TEXT, flags TEXT, htmlpart TEXT, folderId INTEGER,
-               "from TEXT, subject TEXT, copyTo TEXT, recieved TIMESTAMP, created TIMESTAMP,
-               "UID TEXT, )");
+   // query.exec("CREATE TABLE folderMap (id INTEGER PRIMARY KEY AUTOINCREMENT, accountId INTEGER, folderName TEXT)");
+    res = query.exec("CREATE TABLE accountstmp (id INTEGER PRIMARY KEY AUTOINCREMENT, account TEXT, password TEXT, startMonitor TIMESTAMP, endMonitor TIMESTAMP, status BOOL )");
 
 
+   res =  query.exec("CREATE TABLE headers (id INTEGER PRIMARY KEY AUTOINCREMENT, accountId INTEGER, bcc TEXT, cc TEXT, flags TEXT, htmlpart TEXT, folderId INTEGER, from TEXT, subject TEXT, copyTo TEXT, recieved TIMESTAMP, created TIMESTAMP, UID TEXT, REF TEXT, TIMEZONE TEXT )");
 
-}
+   int tmp = 0;
+
+    }
 
 bool MainWindow::connectDatabase(const QString& database)
 {
