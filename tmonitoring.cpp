@@ -93,6 +93,19 @@ bool TMonitoring::saveToDataBase(ImapMailbox *mailbox, const QList<int>& message
          if (!imap.fetchBodyStructure(message))
               qDebug() << "fetchBodyStructure() not worked";
 
+            //==============save headers to databas=============//
+
+         QSqlQuery query;
+         cmd = "INSERT INTO headers(accountId, folderName) VALUES (:accountId, :folderName );";
+         query.prepare(cmd);
+          query.bindValue(":accountId", accountId);
+         query.bindValue(":folderName", box);
+         res =  query.exec();
+
+
+         //==================================================//
+
+
 
          qDebug() << "ID" << message->id()
                   << "UID" << message->uid()

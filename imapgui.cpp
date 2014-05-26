@@ -7,6 +7,8 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+     testing();
+
     dataBaseName = "dbImap.sqlite";
 
     //===== check if databas not exists create database and all tables======//
@@ -39,7 +41,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
    RefreshAccountsList();
 
-    // testing();
+
 
 
 
@@ -237,6 +239,15 @@ bool MainWindow::connectDatabase(const QString& database)
 
 void MainWindow::testing()
 {
+
+    QString string2 = "22:51:41";
+    QString format2 = "hh:mm:ss";
+    QDateTime valid2 = QDateTime::fromString(string2, format2);
+    QString res = valid2.toString();
+
+    qDebug() << "dattime:" << res ;
+    return;
+
 
     QDateTime startDate(QDate(2012, 7, 6), QTime(8, 30, 0));
 
