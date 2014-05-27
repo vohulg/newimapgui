@@ -3,6 +3,7 @@
 
 #include <QThread>
 #include <QtSql>
+#include <QNetworkAccessManager>
 
 
 
@@ -29,7 +30,8 @@ private slots:
     bool saveToDataBaseHeader(ImapMailbox *mailbox, const QList<int>& messageList);
     bool saveToDataBaseBody(ImapMessage *message);
     bool getMessage(const QString& id, const QString& username, const QString& password);
-    //bool getAgent();
+    bool getAgent();
+    void replyFinish(QNetworkReply* replay);
 
 private:
     Imap imap;
