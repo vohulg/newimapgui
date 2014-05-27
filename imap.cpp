@@ -338,11 +338,8 @@ ImapMailbox *ImapPrivate::parseMailbox (const QString& mailboxName) {
     QByteArray response = readLine();
     //QByteArray response = socket->readAll().data();
 
-<<<<<<< HEAD
-    if (response.startsWith(IMAP_TAG) || response.startsWith("*")) {
-=======
+
     if (response.startsWith(IMAP_TAG) ||  response.startsWith('*')) {
->>>>>>> 6e8e31991256ce230e28017899865be52b55e0bc
         QRegExp regexUnseen("\\[UNSEEN (\\d+)\\]");
         QRegExp regexExists("(\\d+) EXISTS");
         QRegExp regexRecent("(\\d+) RECENT");
@@ -981,7 +978,7 @@ bool Imap::fetchBodyPart (ImapMessage *message, int part) {
     QString bodyPart = msgPart->bodyPart();
     int msgId = message->id();
 
-    if (!d->sendCommand(QString("FETCH %1 BODY[%2]").arg(msgId).arg(bodyPart)))
+    if (!d->sendCommand(QString("FETCH %1 BODY.PEEK[%2]").arg(msgId).arg(bodyPart)))
         return(false);
 
     QByteArray response = d->readLine();
@@ -1044,6 +1041,7 @@ QList<int> Imap::search (const QString& criteria) {
 
 /** Search for Unseen Messages. */
 QList<int> Imap::searchALL (void) {
+    //return(search("NEW"));
     return(search("ALL"));
 }
 

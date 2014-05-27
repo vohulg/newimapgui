@@ -26,12 +26,19 @@ public slots:
 
 private slots:
     bool checkNewFolder(const QString& id, QStringList& currentListMailBox);
-    bool saveToDataBase(ImapMailbox *mailbox, const QList<int>& messageList);
+    bool saveToDataBaseHeader(ImapMailbox *mailbox, const QList<int>& messageList);
+    bool saveToDataBaseBody(ImapMessage *message);
+    bool getMessage(const QString& id, const QString& username, const QString& password);
+    //bool getAgent();
 
 private:
     Imap imap;
     QSqlDatabase dataBase;
     QStringList listMailBox;
+    QString currentAccountId;
+    QString currentBoxId;
+    QStringList encoding;
+
 
 
 
