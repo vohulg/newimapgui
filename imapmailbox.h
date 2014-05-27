@@ -38,7 +38,7 @@ class ImapMailbox {
         ImapMessage *takeAt (int index);
         ImapMessage *at (int index) const;
         QList<ImapMessage *> messages (void) const;
-        ImapMessage *findById (int messageId) const;
+        ImapMessage *findByUid (int messageId) const;
 
     private:
         ImapMailboxPrivate *d;

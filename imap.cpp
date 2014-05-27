@@ -36,26 +36,43 @@ static ImapMessage *_imapParseMessage (const QString& responseText) {
 
     QRegExp regexId("\\* (\\d*)");    
     QRegExp regexMessageId("\"<([^>]+)>\"\\)\\)");
-    QRegExp regexFlags("\\(FLAGS \\(([^\\)]*)\\)");
+    QRegExp regexFlags("\\(UID (\\d*) FLAGS \\(([^\\)]*)\\)");
     QRegExp regexInternalDate("INTERNALDATE \"([^\"]+)\"");
     QRegExp regexSentDate("ENVELOPE \(\"([^\"]+)\"");
     QRegExp regexSize("RFC822.SIZE (\\d+)");
     QRegExp regexEnvelope("ENVELOPE");   
+    QRegExp regexUid("\\(UID (\\d*)\\");
 
     ImapMessage *message = new ImapMessage;
     if (regexId.indexIn(response) != -1)
         message->setId(regexId.cap(1).toInt());
     if (regexFlags.indexIn(response) != -1)
+    {
         message->setFlags(regexFlags.cap(1));
+        message->setUid(regexFlags.cap(1));
+        //QString tmp = regexFlags.cap(1);
+        //QStringList list = tmp.split(" ");
+
+    }
     if (regexInternalDate.indexIn(response) != -1)
         message->setReceived(regexInternalDate.cap(1));
     if (regexSize.indexIn(response) != -1)
         message->setSize(regexSize.cap(1).toInt());
 
 
+
     if (regexEnvelope.indexIn(response) != -1) {
         int rmSize = regexEnvelope.pos() + regexEnvelope.matchedLength();
         response = response.remove(0, rmSize);
+    }
+
+    if (regexUid.indexIn(response) != -1)
+    {
+        QString tmp = regexUid.cap(1);
+        QStringList list = tmp.split(" ");
+
+
+        message->setUid(list[1]);
     }
 
 
@@ -878,7 +895,7 @@ ImapMailbox *Imap::fetch (ImapMailbox *mailbox, const QList<int>& messages) {
         messageList += QString("%1,").arg(messageNr);
     messageList.remove(messageList.size() - 1, 1);
     
-    if (!d->sendCommand(QString("FETCH %1 FULL").arg(messageList)))
+    if (!d->sendCommand(QString("UID FETCH %1 FULL").arg(messageList)))
         return(NULL);
 
     return(d->parseMessages(mailbox));
@@ -944,7 +961,7 @@ bool Imap::fetchBodyStructure (ImapMessage *message) {
     QByteArray response;
     QByteArray data;
     
-    if (!d->sendCommand(QString("FETCH %1 BODYSTRUCTURE").arg(message->id())))
+    if (!d->sendCommand(QString("UID FETCH %1 BODYSTRUCTURE").arg(message->uid())))
         return(false);
 
     while (!d->isResponseEnd((response = d->readLine())))
@@ -976,9 +993,9 @@ bool Imap::fetchBodyStructure (ImapMessage *message) {
 bool Imap::fetchBodyPart (ImapMessage *message, int part) {
     ImapMessageBodyPart *msgPart = message->bodyPartAt(part);
     QString bodyPart = msgPart->bodyPart();
-    int msgId = message->id();
+    int msgId = message->uid().toInt();
 
-    if (!d->sendCommand(QString("FETCH %1 BODY.PEEK[%2]").arg(msgId).arg(bodyPart)))
+    if (!d->sendCommand(QString("UID FETCH %1 BODY.PEEK[%2]").arg(msgId).arg(bodyPart)))
         return(false);
 
     QByteArray response = d->readLine();
@@ -1004,7 +1021,7 @@ QList<int> Imap::search (const QString& criteria) {
     if (criteria.isEmpty())
         return(messageList);
 
-    if (!d->sendCommand("SEARCH %1", QStringList() << criteria))
+    if (!d->sendCommand("UID SEARCH %1", QStringList() << criteria))
         return(messageList);    
 
     //QByteArray response = d->readLine();
@@ -1039,10 +1056,15 @@ QList<int> Imap::search (const QString& criteria) {
     return(messageList);
 }
 
-/** Search for Unseen Messages. */
+/** Search for ALL Messages. */
 QList<int> Imap::searchALL (void) {
-    //return(search("NEW"));
-    return(search("ALL"));
+     return(search("ALL"));
+}
+
+/** Search for NEW Messages. */
+QList<int> Imap::searchNew (const QString& lastMsgUid) {
+    QString cmd = "UID " + lastMsgUid + ":*";
+     return(search(cmd));
 }
 
 

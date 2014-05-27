@@ -126,9 +126,9 @@ QList<ImapMessage *> ImapMailbox::messages (void) const {
     return(d->messages);
 }
 
-ImapMessage *ImapMailbox::findById (int messageId) const {
+ImapMessage *ImapMailbox::findByUid (int messageId) const {
     foreach (ImapMessage *message, d->messages) {
-        if (message->id() == messageId)
+        if (message->uid().toInt() == messageId)
             return(message);
     }
     return(NULL);

@@ -78,6 +78,7 @@ class Imap {
         bool setAnswered (int messageNumber, bool value);
 
         // Methods (Imap Message Search Related)
+        QList<int> searchNew (const QString& lastMsgUid);
         QList<int> searchALL (void);
         QList<int> search (const QString& criteria);
         QList<int> searchTo (const QString& criteria);

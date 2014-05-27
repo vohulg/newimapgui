@@ -5,7 +5,7 @@ TMonitoring::TMonitoring(QObject *parent) :
 {
 
     encoding << "NoEncoding" << "UnknownEncoding" << "Utf7Encoding" << "Utf8Encoding" << "Base64Encoding" << "QuotedPrintableEncoding";
-
+    lastMsgUid = -1;
 
 }
 
@@ -63,6 +63,23 @@ bool TMonitoring::getMessage(const QString& id, const QString& username, const Q
     if (!checkNewFolder(id, listMailBox))
         qDebug() << "folder not checked";
 
+    // получаем последний uid сообщения. Если такого нет, значит в базе нет ни одного сообщения с аккаунта
+    QSqlQuery query;
+    QString cmd = "SELECT uid FROM headers WHERE accountId = " +  currentAccountId + " ORDER BY uid DESC";
+    bool res = query.exec(cmd);
+    if (res)
+    {
+        query.next();
+        lastMsgUid = query.value(0).toInt()+1;
+    }
+
+    else
+         lastMsgUid = -1;
+
+
+
+
+
 
     //================проходим по каждой папке, получаем сообщения и записываем их в базу =================================================================================//
 
@@ -72,14 +89,29 @@ bool TMonitoring::getMessage(const QString& id, const QString& username, const Q
          if (mailbox == NULL)
               qDebug() << box <<" not selected";
 
-        // QList<int> messageList = imap.searchALL();
-         QList<int> messageList = imap.searchALL();
-              qDebug() << box << " messageList:" << messageList;
 
 
-         QSqlQuery query;
-         QString cmd = "SELECT id FROM folderMap WHERE accountId = " +  currentAccountId + " AND folderName = \'" + box + "\'";
-         bool res = query.exec(cmd);
+         QList<int> messageList;
+         if (lastMsgUid == -1)
+         {
+             messageList = imap.searchALL();
+             qDebug() << box << " messageList:" << messageList;
+         }
+         else
+         {
+             messageList = imap.searchNew(QString("%1").arg(lastMsgUid));
+             qDebug() << box << " messageList:" << messageList;
+         }
+
+
+
+
+
+
+        QSqlQuery query;
+
+          QString cmd = "SELECT id FROM folderMap WHERE accountId = " +  currentAccountId + " AND folderName = \'" + box + "\'";
+          bool res = query.exec(cmd);
          if (res)
          {
              query.next();
@@ -95,12 +127,12 @@ bool TMonitoring::getMessage(const QString& id, const QString& username, const Q
               qDebug() << "Don't saved new messagу in mailbox";
 
 
-         // Detroy Mailbox.
+         // Destroy Mailbox.
          delete mailbox;
 
 
-    return true;
-}
+    //return true;
+   }
 }
 
 
@@ -110,13 +142,15 @@ bool TMonitoring::saveToDataBaseHeader(ImapMailbox *mailbox, const QList<int>& m
 {
 
       bool res = false;
+       int cnt = messageList.count();
 
     foreach (int msgId, messageList) {
-         ImapMessage *message = mailbox->findById(msgId);
+         ImapMessage *message = mailbox->findByUid(msgId);
          if (message == NULL) {
              qDebug() << "Message" << msgId << "Not Found.";
              continue;
          }
+
 
          if (!imap.fetchBodyStructure(message))
               qDebug() << "fetchBodyStructure() not worked";
@@ -139,8 +173,8 @@ bool TMonitoring::saveToDataBaseHeader(ImapMailbox *mailbox, const QList<int>& m
 
 
          QSqlQuery query;
-         QString cmd = "INSERT INTO headers(accountId, folderName, bcc, sent, subject, ref, сс, recieved, timezone, fr, komu)"
-                 " VALUES (:accountId, :folderName, :bcc, :sent, :subject, :ref, :cc, :recieved, :timezone, :fr, :komu)";
+         QString cmd = "INSERT INTO headers(accountId, folderName, bcc, sent, subject, ref, сс, recieved, timezone, fr, komu, uid)"
+                 " VALUES (:accountId, :folderName, :bcc, :sent, :subject, :ref, :cc, :recieved, :timezone, :fr, :komu, :uid)";
 
 
          res = query.prepare(cmd);
@@ -155,11 +189,13 @@ bool TMonitoring::saveToDataBaseHeader(ImapMailbox *mailbox, const QList<int>& m
          query.bindValue(":recieved", message->received());
          query.bindValue(":sent", message->sent());
          query.bindValue(":timezone",  message->timeZone());
+         query.bindValue(":uid",  message->uid().toInt());
          res =  query.exec();
 
 
          //=================== запись полей body ===============================//
         saveToDataBaseBody(message);
+
 
      }
 

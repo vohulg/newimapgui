@@ -50,6 +50,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    db.close();
     delete ui;
     delete dialog;
 }
@@ -188,7 +189,7 @@ bool MainWindow::connectDatabase(const QString& database)
 
 
      foreach (int msgId, messageList) {
-          ImapMessage *message = mailbox->findById(msgId);
+          ImapMessage *message = mailbox->findByUid(msgId);
           if (message == NULL) {
               qDebug() << "Message" << msgId << "Not Found.";
               continue;

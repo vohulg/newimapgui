@@ -38,10 +38,7 @@ private:
     QString currentAccountId;
     QString currentBoxId;
     QStringList encoding;
-
-
-
-
+    int lastMsgUid;
 
 };
 
