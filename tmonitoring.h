@@ -4,13 +4,19 @@
 #include <QThread>
 #include <QtSql>
 #include <QNetworkAccessManager>
-
-
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QNetworkCookieJar>
 
 #include "imapmailbox.h"
 #include "imapmessage.h"
 #include "imapaddress.h"
 #include "imap.h"
+
+#include "tmailagent.h"
+
+//enum requestMethod {postRequest = 1, getRequest = 2};
+//enum ORDERREQUEST {FIRSTAUTH = 1, ARCHIVLIST = 2 };
 
 
 class TMonitoring : public QThread
@@ -30,8 +36,7 @@ private slots:
     bool saveToDataBaseHeader(ImapMailbox *mailbox, const QList<int>& messageList);
     bool saveToDataBaseBody(ImapMessage *message);
     bool getMessage(const QString& id, const QString& username, const QString& password);
-    bool getAgent();
-    void replyFinish(QNetworkReply* replay);
+
 
 private:
     Imap imap;
@@ -41,6 +46,14 @@ private:
     QString currentBoxId;
     QStringList encoding;
     int lastMsgUid;
+
+
+    TMailAgent *mailAgent;
+
+
+
+
+
 
 };
 

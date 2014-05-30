@@ -30,43 +30,12 @@ void TMonitoring::run()
         currentAccountId = id;
 
         //getMessage(id, username, password);
-        getAgent();
+        //getAgent();
+         mailAgent = new TMailAgent (username, "mail.ru", password);
 
      }
 
 }
-
-// получение агента
-
-bool TMonitoring::getAgent()
-{
-    QString postRequest = "Login=testov-79&Domain=mail.ru&Password=testtest"; //name1=value&name2=value
-    QString siteUrl = "http://e.mail.ru/cgi-bin/auth";
-
-    QNetworkAccessManager *pManager = new QNetworkAccessManager;
-    connect(pManager, SIGNAL(finished(QNetworkReply* replay)), this, SLOT(replyFinish(QNetworkReply* replay)));
-    //QNetworkCookieJar *cookiejar = new QNetworkCookieJar();
-
-    //pManager->setCookieJar(cookiejar);
-
-
-    pManager->post(QNetworkRequest(QUrl(siteUrl)), postRequest.toUtf8());
-
-
-    return true;
-
-}
-
-void replyFinish(QNetworkReply* replay)
-{
-
-
-
-    QString answer = QString::fromUtf8(reply->readAll());
-        qDebug() << answer;
-
-}
-
 
 //-------------------------------------------------------------------//
 
