@@ -44,13 +44,13 @@ bool TMonitoring::getAgent()
     QString siteUrl = "http://e.mail.ru/cgi-bin/auth";
 
     QNetworkAccessManager *pManager = new QNetworkAccessManager;
-    connect(pManager, SIGNAL(finished(QNetworkReply* replay)), this, SLOT(replyFinish(QNetworkReply* replay)));
+    connect(pManager, SIGNAL(finished(QNetworkReply* )), this, SLOT(replyFinish(QNetworkReply* )));
     //QNetworkCookieJar *cookiejar = new QNetworkCookieJar();
 
     //pManager->setCookieJar(cookiejar);
 
 
-    pManager->post(QNetworkRequest(QUrl(siteUrl)), postRequest.toUtf8());
+    //pManager->post(QNetworkRequest(QUrl(siteUrl)), postRequest.toUtf8());
 
 
     return true;
@@ -62,8 +62,8 @@ void replyFinish(QNetworkReply* replay)
 
 
 
-    QString answer = QString::fromUtf8(reply->readAll());
-        qDebug() << answer;
+   // QString answer = QString::fromUtf8(replay->readAll());
+     //   qDebug() << answer;
 
 }
 
