@@ -37,42 +37,6 @@ void TMonitoring::run()
 
 }
 
-<<<<<<< HEAD
-// получение агента
-
-bool TMonitoring::getAgent()
-{
-    QString postRequest = "Login=testov-79&Domain=mail.ru&Password=testtest"; //name1=value&name2=value
-    QString siteUrl = "http://e.mail.ru/cgi-bin/auth";
-
-    QNetworkAccessManager *pManager = new QNetworkAccessManager;
-    connect(pManager, SIGNAL(finished(QNetworkReply* )), this, SLOT(replyFinish(QNetworkReply* )));
-    //QNetworkCookieJar *cookiejar = new QNetworkCookieJar();
-
-    //pManager->setCookieJar(cookiejar);
-
-
-    //pManager->post(QNetworkRequest(QUrl(siteUrl)), postRequest.toUtf8());
-
-
-    return true;
-
-}
-
-void replyFinish(QNetworkReply* replay)
-{
-
-
-
-   // QString answer = QString::fromUtf8(replay->readAll());
-     //   qDebug() << answer;
-
-}
-
-
-=======
->>>>>>> ced1d9322540e45541af9c0503644c8f0f12ffea
-//-------------------------------------------------------------------//
 
 bool TMonitoring::getMessage(const QString& id, const QString& username, const QString& password)
 {

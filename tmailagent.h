@@ -27,6 +27,7 @@ private slots:
     void httpFinished();
     void httpReadyRead();
     void startRequest(requestMethod method, QString& strPostRequest );
+    void jsonParse();
 
 private:
     QString Username;
@@ -43,6 +44,8 @@ private:
     QByteArray currentCookie;
     QString requestString;
     TMyCookieJar *myCookie;
+
+    QByteArray lastResponsAgentRequest;
 
 
 
