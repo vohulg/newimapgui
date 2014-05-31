@@ -30,12 +30,14 @@ void TMonitoring::run()
         currentAccountId = id;
 
         //getMessage(id, username, password);
-        getAgent();
+        //getAgent();
+         mailAgent = new TMailAgent (username, "mail.ru", password);
 
      }
 
 }
 
+<<<<<<< HEAD
 // получение агента
 
 bool TMonitoring::getAgent()
@@ -68,6 +70,8 @@ void replyFinish(QNetworkReply* replay)
 }
 
 
+=======
+>>>>>>> ced1d9322540e45541af9c0503644c8f0f12ffea
 //-------------------------------------------------------------------//
 
 bool TMonitoring::getMessage(const QString& id, const QString& username, const QString& password)
