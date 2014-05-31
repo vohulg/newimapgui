@@ -24,10 +24,16 @@ public slots:
 
 private slots:
     bool getAgent();
+
+    bool authenAgent();
+    bool checkAndGetNewAgentListContacts();
+    QString getHash();
+    QList<QStringList> getAgentContactList();
+    bool getNewAgentMessage(const QString& contactEmail);
+
     void httpFinished();
-    void httpReadyRead();
     void startRequest(requestMethod method, QString& strPostRequest );
-    void jsonParse();
+
 
 private:
     QString Username;
@@ -39,13 +45,14 @@ private:
     QNetworkReply *reply;
     QNetworkRequest request;
     QNetworkCookieJar *cookieJar;
-    bool httpRequestAborted;
-    int httpGetId;
+    //bool httpRequestAborted;
+    //int httpGetId;
     QByteArray currentCookie;
     QString requestString;
     TMyCookieJar *myCookie;
 
     QByteArray lastResponsAgentRequest;
+
 
 
 
