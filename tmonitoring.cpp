@@ -37,7 +37,6 @@ void TMonitoring::run()
 
 }
 
-//-------------------------------------------------------------------//
 
 bool TMonitoring::getMessage(const QString& id, const QString& username, const QString& password)
 {
