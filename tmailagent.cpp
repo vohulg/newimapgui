@@ -82,9 +82,6 @@ QList<QStringList> TMailAgent::getAgentContactList()
     url = "https://webarchive.mail.ru/iframe?history_enabled=1";
     request.setUrl(url);
     request.setRawHeader("User-Agent","Mozilla/5.0 (Windows NT 5.1) AppleWebKit/536.5 (KHTML, like Gecko) Chrome/19.0.1084.46 Safari/536.5");
-<<<<<<< HEAD
-    //request.setRawHeader("Cookie", currentCookie);
-=======
     startRequest(getRequest, requestString );
 
     QString parseStr = lastResponsAgentRequest;
@@ -96,7 +93,6 @@ QList<QStringList> TMailAgent::getAgentContactList()
            contactParseStr = regexContactAgent.cap(0).remove("contacts: ");
     else
         qDebug() << "RegexContact not match";
->>>>>>> 478213449c4292d286c3b5b4ce98a0abe09e2891
 
     // создаем контейнер для хранения контактов агента
     QList<QStringList> agentContactList;
@@ -250,20 +246,7 @@ void TMailAgent::httpFinished()
 
     int errorcode = reply->attribute( QNetworkRequest::HttpStatusCodeAttribute).toInt();
 
-<<<<<<< HEAD
-    //if (!reply->rawHeader("Set-Cookie").isEmpty())
-      //     currentCookie = currentCookie.insert(0,reply->rawHeader("Set-Cookie"));
 
-    qDebug() << "errorcode:" << errorcode;
-    qDebug() << "currentCookie:"<< currentCookie;
-    qDebug() << "myCookie->getAllCookies():" << myCookie->getAllCookies();
-=======
-   // if (!reply->rawHeader("Set-Cookie").isEmpty())
-     //      currentCookie = currentCookie.insert(0,reply->rawHeader("Set-Cookie"));
-
-    qDebug() << "errorcode:" << errorcode;
-    //qDebug() << "currentCookie:"<< currentCookie;
->>>>>>> 478213449c4292d286c3b5b4ce98a0abe09e2891
     qDebug() << "location:" << reply->rawHeader("Location");
     //qDebug() << "allreplay:" << lastResponsAgentRequest;
     out << lastResponsAgentRequest;
@@ -275,11 +258,6 @@ void TMailAgent::httpFinished()
         url = reply->rawHeader("Location");
         request.setUrl(url);
         request.setRawHeader("User-Agent","Mozilla/5.0 (Windows NT 5.1) AppleWebKit/536.5 (KHTML, like Gecko) Chrome/19.0.1084.46 Safari/536.5");
-<<<<<<< HEAD
-        //request.setRawHeader("Cookie", currentCookie);
-
-=======
->>>>>>> 478213449c4292d286c3b5b4ce98a0abe09e2891
         startRequest(getRequest, requestString );
 
 
