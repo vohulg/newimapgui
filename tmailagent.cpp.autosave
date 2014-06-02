@@ -76,7 +76,7 @@ void TMailAgent::httpFinished()
       //     currentCookie = currentCookie.insert(0,reply->rawHeader("Set-Cookie"));
 
     qDebug() << "errorcode:" << errorcode;
-    qDebug() << "currentCookie:"<< currentCookie;
+    qDebug() << "currentCookie:" << currentCookie;
     qDebug() << "myCookie->getAllCookies():" << myCookie->getAllCookies();
     qDebug() << "location:" << reply->rawHeader("Location");
     QByteArray respons =  reply->readAll();
