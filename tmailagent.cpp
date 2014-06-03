@@ -416,13 +416,13 @@ void TMailAgent::httpFinished()
 
     int errorcode = reply->attribute( QNetworkRequest::HttpStatusCodeAttribute).toInt();
 
+
     qDebug() << "errorcode:" << errorcode;
    qDebug() << "myCookie->getAllCookies():" << myCookie->getAllCookies();
    // if (!reply->rawHeader("Set-Cookie").isEmpty())
      //      currentCookie = currentCookie.insert(0,reply->rawHeader("Set-Cookie"));
 
-    qDebug() << "errorcode:" << errorcode;
-    //qDebug() << "currentCookie:"<< currentCookie;
+
 
     qDebug() << "location:" << reply->rawHeader("Location");
     //qDebug() << "allreplay:" << lastResponsAgentRequest;
