@@ -41,6 +41,9 @@ private slots:
     void httpFinished();
     void startRequest(requestMethod method, QString& strPostRequest );
     bool checkNewandSaveAgentContactsToDataBase(QList<QStringList> &AgentContactList);
+    long long int getMaxAgentMsgId(const int & agentContactId);
+    int getAgentContactId(const QString& agentContactEmail);
+    long long int parseAgentMessageResponse(const QString& contactEmail);
 
 
 private:

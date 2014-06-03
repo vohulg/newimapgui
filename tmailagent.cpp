@@ -7,10 +7,81 @@ TMailAgent::TMailAgent(const QString& accountId, QSqlDatabase & database, QObjec
 
 }
 
+long long int TMailAgent::parseAgentMessageResponse(const QString& contactEmail)
+{
+    QString messageParseStr = lastResponsAgentRequest;
+
+    //----------парсинг переписки в json формате---------------------//
+    // создаем контейнеры для хранения данных сообщения агента
+    long long int lastMsgId = 0;
+    QStringList msgAgentId;
+    QStringList msgAgentText;
+    QByteArray msgAgentInbox;
+    QStringList msgAgentDate;
+
+    QJsonDocument jsonResponse = QJsonDocument::fromJson(messageParseStr.toUtf8());
+    QJsonObject jsonObject = jsonResponse.object();
+    QJsonArray jsonArray = jsonObject["list"].toArray();
+    foreach (const QJsonValue & value, jsonArray)
+            {
+                QJsonObject obj = value.toObject();
+                msgAgentDate.append(obj["date"].toString());
+                msgAgentId.append(obj["id"].toString());
+                msgAgentInbox.append(obj["inbox"].toBool());
+                msgAgentText.append(obj["text"].toString());
+            }
+
+    jsonArray = jsonObject["is_last"].toArray();
+    QJsonObject obj = jsonArray[0].toObject();
+
+
+
+
+
+    // запись в базу. Предварительно из базы вытаскиваем самый большой Id сообщения
+    // и проверяем, если текущий ID меньше полученного, то в базe не пишем
+
+    long long int maxMsgIdFromDatabase = getMaxAgentMsgId(getAgentContactId(contactEmail)); // максимальный id сообщения в базе
+
+    for (int i = 0; i < msgAgentId.size(); i++)
+    {
+
+        lastMsgId =  msgAgentId[i].toLongLong();
+        // если id текущего сообщения меньше максимального, то сообщение
+        //пропускаем и не записываем
+       // long long int iMsg = msgAgentId[i].toLongLong();
+
+        if (msgAgentId[i].toLongLong() <= maxMsgIdFromDatabase)
+            continue;
+
+
+        cmd = "INSERT INTO agentMessage(agentContactId, msgId, msgText, inbox, timestamp)"
+                " VALUES(:agentContactId, :msgId, :msgText, :inbox, :timestamp)";
+
+        res = query.prepare(cmd);
+
+
+         query.bindValue(":agentContactId", getAgentContactId(contactEmail) );
+         query.bindValue(":msgId", msgAgentId[i].toLongLong());
+         query.bindValue(":msgText",  msgAgentText[i] );
+         query.bindValue(":inbox", (int)msgAgentInbox[i]);
+         query.bindValue(":timestamp", msgAgentDate[i] );
+
+         if (!query.exec())
+             FUNC_ALERT_ERROR("Message from server not writed to database");
+
+
+
+    }
+
+    return lastMsgId;
+
+}
+
 bool TMailAgent::getNewAgentMessage(const QString& contactEmail)
 {
 
-        // получаем содержание переписки
+        // посылаем первый запрос на получение переписки
         QString hash = getHash();
         url = "https://webarchive.mail.ru/ajax/dialog?opponent_email=" + contactEmail + "&message_id=&sort=desc&hash=" + hash;
         request.setUrl(url);
@@ -23,38 +94,64 @@ bool TMailAgent::getNewAgentMessage(const QString& contactEmail)
         qDebug() << "lastResponsAgentRequest:" << lastResponsAgentRequest;
         qDebug() << "****************************************";
 
-        //----------парсинг переписки в json формате---------------------//
-        // создаем контейнеры для хранения данных сообщения агента
-        QStringList msgAgentId;
-        QStringList msgAgentText;
-        QStringList msgAgentInbox;
-        QStringList msgAgentDate;
+        long long int lastMsgId =  parseAgentMessageResponse (contactEmail);
 
+       for (int i =0; i < 3; i++)
+       {
+           // посылаем первый запрос на получение переписки
+           QString hash = getHash();
+           url = "https://webarchive.mail.ru/ajax/dialog?opponent_email=" + contactEmail + "&message_id=" + QString::number(lastMsgId) +"&sort=desc&hash=" + hash;
+           request.setUrl(url);
+           request.setRawHeader("User-Agent","Mozilla/5.0 (Windows NT 5.1) AppleWebKit/536.5 (KHTML, like Gecko) Chrome/19.0.1084.46 Safari/536.5");
+           startRequest(getRequest, requestString );
 
-        QJsonDocument jsonResponse = QJsonDocument::fromJson(messageParseStr.toUtf8());
-        QJsonObject jsonObject = jsonResponse.object();
-        QJsonArray jsonArray = jsonObject["list"].toArray();
+           QString messageParseStr = lastResponsAgentRequest;
+           qDebug() << "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+           qDebug() << "url:" << url << "\n";
+           qDebug() << "lastResponsAgentRequest:" << lastResponsAgentRequest;
+           qDebug() << "****************************************";
 
-        foreach (const QJsonValue & value, jsonArray)
-                {
-                    QJsonObject obj = value.toObject();
-                    msgAgentId.append(obj["id"].toString());
-                    msgAgentText.append(obj["text"].toString());
-                    msgAgentInbox.append(obj["inbox"].toString());
-                    msgAgentDate.append(obj["date"].toString());
+           lastMsgId =  parseAgentMessageResponse(contactEmail);
 
-                }
-
-        // запись в базу. Предварительно из базы вытаскиваем самый большой Id сообщения
-        // и проверяем, если текущий ID меньше полученного, то в баз не пишем
-
-        for (int i = 0; i < msgAgentId.size(); i++)
-            // проверка и запись в базу
+       }
 
 
 
 
     return true;
+
+
+}
+
+int TMailAgent::getAgentContactId(const QString& agentContactEmail)
+{
+    // получаем максимальный ID для сообщения агента - msgId
+    QSqlQuery localQuery;
+    cmd = "SELECT id FROM agentAccount WHERE agentContactEmail = \'" + agentContactEmail + "\'";
+     if (!localQuery.exec(cmd))
+         FUNC_ABORT("AgentContactId not got from database");
+
+    // если id найден то возвращаем его
+     if(localQuery.next())
+        return localQuery.value(0).toInt();
+
+}
+
+long long int TMailAgent::getMaxAgentMsgId(const int & agentContactId)
+{
+    // получаем максимальный ID для сообщения агента - msgId
+     cmd = "SELECT msgId FROM agentMessage WHERE agentContactId = " + QString::number(agentContactId) + " ORDER BY msgId DESC";
+     if (!query.exec(cmd))
+         FUNC_ABORT("Max msgId not got from database");
+
+    // если записи есть записываем их в maxMsgId
+     if(!query.next())
+         return 0;
+     else
+     {
+        long long int x = query.value(0).toLongLong();
+        return query.value(0).toLongLong();
+     }
 
 
 }
@@ -174,9 +271,9 @@ bool TMailAgent::checkNewandSaveAgentContactsToDataBase(QList<QStringList> &Agen
        if (!query.exec())
            FUNC_ALERT_ERROR("Contact from server not writed to database");
 
-
-
     }
+    return true;
+
 }
 
 
@@ -245,16 +342,26 @@ bool TMailAgent::getAgent()
     }
 
     // -------- получаем из базы список контактов и запускаем скачивание новых писем для данных контактов
-    //...........code...............
     QStringList contactEmailList;
-    contactEmailList << "testtestov101@mail.ru" << "night_post@mail.ru";
+    contactEmailList.clear();
+
+     cmd = "SELECT agentContactEmail FROM agentAccount WHERE accountId = " + AccountId;
+     if (!query.exec(cmd))
+         FUNC_ABORT("Account select not got from database");
+
+     while(query.next()) // если записи есть записываем их в  contactEmailList
+          contactEmailList << query.value(0).toString();
+
+    //contactEmailList << "testtestov101@mail.ru" << "night_post@mail.ru";
+
     foreach (QString contactEmail, contactEmailList)
           getNewAgentMessage(contactEmail);
 
 
 
 /*
-    // запрос необходим для становления куков. Эксперимент показал что для получения переписки агента этот запрос не нужен, но на всякий слчай код оставлю
+    // запрос необходим для становления куков. Эксперимент показал что для получения
+    //переписки агента этот запрос не нужен, но на всякий слчай код оставлю
    url = "https://e.mail.ru/agent/archive";
    request.setUrl(url);
     request.setRawHeader("User-Agent","Mozilla/5.0 (Windows NT 5.1) AppleWebKit/536.5 (KHTML, like Gecko) Chrome/19.0.1084.46 Safari/536.5");
