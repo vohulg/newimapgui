@@ -65,6 +65,7 @@ private:
 
     QSqlQuery query;
     QString cmd;
+    bool isLastJsonResponse;
 
 
 

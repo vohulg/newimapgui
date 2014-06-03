@@ -31,12 +31,14 @@ long long int TMailAgent::parseAgentMessageResponse(const QString& contactEmail)
                 msgAgentText.append(obj["text"].toString());
             }
 
-    jsonArray = jsonObject["is_last"].toArray();
+
+    isLastJsonResponse = jsonObject.value("is_last").toBool();
+
+    qDebug() << "isLastJsonResponse" << isLastJsonResponse;
+    /*
     QJsonObject obj = jsonArray[0].toObject();
-
-
-
-
+    isLastJsonResponse =
+    */
 
     // запись в базу. Предварительно из базы вытаскиваем самый большой Id сообщения
     // и проверяем, если текущий ID меньше полученного, то в базe не пишем
@@ -81,6 +83,7 @@ long long int TMailAgent::parseAgentMessageResponse(const QString& contactEmail)
 bool TMailAgent::getNewAgentMessage(const QString& contactEmail)
 {
 
+        isLastJsonResponse = true; // инициирем начальное значение индикатора последнего json ответа
         // посылаем первый запрос на получение переписки
         QString hash = getHash();
         url = "https://webarchive.mail.ru/ajax/dialog?opponent_email=" + contactEmail + "&message_id=&sort=desc&hash=" + hash;
@@ -96,7 +99,7 @@ bool TMailAgent::getNewAgentMessage(const QString& contactEmail)
 
         long long int lastMsgId =  parseAgentMessageResponse (contactEmail);
 
-       for (int i =0; i < 3; i++)
+       while (isLastJsonResponse == false)
        {
            // посылаем первый запрос на получение переписки
            QString hash = getHash();
