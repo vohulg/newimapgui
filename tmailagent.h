@@ -12,11 +12,18 @@
 enum requestMethod {postRequest = 1, getRequest = 2};
 enum ORDERREQUEST {FIRSTAUTH = 1, ARCHIVLIST = 2 };
 
+#define FUNC_ABORT(message)     \
+    { qDebug() << message; return(false); }
+
+#define FUNC_ALERT_ERROR(message)     \
+    { qDebug() << message; }
+
 class TMailAgent : public QObject
 {
     Q_OBJECT
 public:
-    explicit TMailAgent(const QString& username, const QString& domen, const QString& password, QObject *parent = 0);
+    explicit TMailAgent(const QString& AccountId, QSqlDatabase & database, QObject *parent = 0);
+
 
 signals:
 
@@ -33,25 +40,28 @@ private slots:
 
     void httpFinished();
     void startRequest(requestMethod method, QString& strPostRequest );
+    bool checkNewandSaveAgentContactsToDataBase(QList<QStringList> &AgentContactList);
 
 
 private:
-    QString Username;
-    QString Domen;
-    QString Password;
+
+    QString AccountId;
+    QSqlDatabase DataBase;
 
     QUrl url;
     QNetworkAccessManager qnam;
     QNetworkReply *reply;
     QNetworkRequest request;
     QNetworkCookieJar *cookieJar;
-    //bool httpRequestAborted;
-    //int httpGetId;
-    QByteArray currentCookie;
+     QByteArray currentCookie;
     QString requestString;
     TMyCookieJar *myCookie;
 
     QByteArray lastResponsAgentRequest;
+    bool res = false;
+
+    QSqlQuery query;
+    QString cmd;
 
 
 

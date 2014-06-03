@@ -1,7 +1,7 @@
 #include "tmailagent.h"
 
-TMailAgent::TMailAgent(const QString& username, const QString& domen, const QString& password, QObject *parent) :
-    QObject(parent), Username(username), Domen(domen), Password(password)
+TMailAgent::TMailAgent(const QString& accountId, QSqlDatabase & database, QObject *parent) :
+    QObject(parent), AccountId(accountId), DataBase(database)
 {
   getAgent();
 
@@ -63,11 +63,29 @@ bool TMailAgent::getNewAgentMessage(const QString& contactEmail)
 
 bool TMailAgent::authenAgent()
 {
+   // получение из базы username, password, domen,
+
+    cmd = "SELECT account, password FROM accounts WHERE id = " + AccountId;
+    if (!query.exec(cmd))
+        FUNC_ABORT("Account select not got from database");
+
+    if (!query.next())
+        FUNC_ABORT("Account next not got from database");
+
+    QString tmpUsername = query.value(0).toString();
+    QString password = query.value(1).toString();
+    int pos = tmpUsername.indexOf("@");
+
+    QString domen = tmpUsername.remove(0,pos+1);
+    QString username = query.value(0).toString().remove(pos,query.value(0).toString().size());
+
+
     myCookie = new TMyCookieJar();
     qnam.setCookieJar(myCookie);
     url = "https://auth.mail.ru/cgi-bin/auth?from=splash";
 
-    requestString = "Domain=mail.ru&Login=testov-79&Password=testtest&new_auth_form=1&saveauth=1";
+    //requestString = "Domain=mail.ru&Login=testov-79&Password=testtest&new_auth_form=1&saveauth=1";
+    requestString = "Domain=" + domen + "&Login=" + username + "&Password=" + password + "&new_auth_form=1&saveauth=1";
     request.setUrl(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("application/x-www-form-urlencoded"));
     request.setRawHeader("User-Agent","Mozilla/5.0 (Windows NT 5.1) AppleWebKit/536.5 (KHTML, like Gecko) Chrome/19.0.1084.46 Safari/536.5");
@@ -82,9 +100,6 @@ QList<QStringList> TMailAgent::getAgentContactList()
     url = "https://webarchive.mail.ru/iframe?history_enabled=1";
     request.setUrl(url);
     request.setRawHeader("User-Agent","Mozilla/5.0 (Windows NT 5.1) AppleWebKit/536.5 (KHTML, like Gecko) Chrome/19.0.1084.46 Safari/536.5");
-<<<<<<< HEAD
-    //request.setRawHeader("Cookie", currentCookie);
-=======
     startRequest(getRequest, requestString );
 
     QString parseStr = lastResponsAgentRequest;
@@ -96,7 +111,6 @@ QList<QStringList> TMailAgent::getAgentContactList()
            contactParseStr = regexContactAgent.cap(0).remove("contacts: ");
     else
         qDebug() << "RegexContact not match";
->>>>>>> 478213449c4292d286c3b5b4ce98a0abe09e2891
 
     // создаем контейнер для хранения контактов агента
     QList<QStringList> agentContactList;
@@ -118,9 +132,54 @@ QList<QStringList> TMailAgent::getAgentContactList()
 
             }
 
+    // сохраняем в базу данных контактный лист
+    checkNewandSaveAgentContactsToDataBase(agentContactList);
+
     return agentContactList;
 
 }
+
+
+bool TMailAgent::checkNewandSaveAgentContactsToDataBase(QList<QStringList> &AgentContactList)
+{
+   //получаем из базы список имеющихся контактов агента
+    QStringList contactFromDatabase;
+    contactFromDatabase.clear();
+
+    cmd = "SELECT agentContactEmail FROM agentAccount WHERE accountId = " + AccountId;
+    if (!query.exec(cmd))
+        FUNC_ABORT("Account select not got from database");
+
+    while(query.next()) // если записи есть записываем их в contactFromDatabase
+        contactFromDatabase << query.value(0).toString();
+
+    // получаем списки контактов с сервера
+    QStringList agentName = AgentContactList[0];
+    QStringList agentEmail =  AgentContactList[1];
+
+
+    for (int i =0; i < agentEmail.size(); i++ )
+    {
+       // сверяем имеющиеся в базе контакты с полученными с сервера
+        if (contactFromDatabase.contains(agentEmail[i]))
+           continue;
+
+      cmd = "INSERT INTO agentAccount(agentContactName, agentContactEmail, accountId) VALUES(:agentContactName, :agentContactEmail, :accountId)";
+      res = query.prepare(cmd);
+
+       query.bindValue(":agentContactName", agentName[i]);
+       query.bindValue(":agentContactEmail", agentEmail[i]);
+       query.bindValue(":accountId", AccountId);
+
+       if (!query.exec())
+           FUNC_ALERT_ERROR("Contact from server not writed to database");
+
+
+
+    }
+}
+
+
 
 QString TMailAgent::getHash()
 {
@@ -250,20 +309,14 @@ void TMailAgent::httpFinished()
 
     int errorcode = reply->attribute( QNetworkRequest::HttpStatusCodeAttribute).toInt();
 
-<<<<<<< HEAD
-    //if (!reply->rawHeader("Set-Cookie").isEmpty())
-      //     currentCookie = currentCookie.insert(0,reply->rawHeader("Set-Cookie"));
-
     qDebug() << "errorcode:" << errorcode;
-    qDebug() << "currentCookie:"<< currentCookie;
-    qDebug() << "myCookie->getAllCookies():" << myCookie->getAllCookies();
-=======
+   qDebug() << "myCookie->getAllCookies():" << myCookie->getAllCookies();
    // if (!reply->rawHeader("Set-Cookie").isEmpty())
      //      currentCookie = currentCookie.insert(0,reply->rawHeader("Set-Cookie"));
 
     qDebug() << "errorcode:" << errorcode;
     //qDebug() << "currentCookie:"<< currentCookie;
->>>>>>> 478213449c4292d286c3b5b4ce98a0abe09e2891
+
     qDebug() << "location:" << reply->rawHeader("Location");
     //qDebug() << "allreplay:" << lastResponsAgentRequest;
     out << lastResponsAgentRequest;
@@ -275,11 +328,6 @@ void TMailAgent::httpFinished()
         url = reply->rawHeader("Location");
         request.setUrl(url);
         request.setRawHeader("User-Agent","Mozilla/5.0 (Windows NT 5.1) AppleWebKit/536.5 (KHTML, like Gecko) Chrome/19.0.1084.46 Safari/536.5");
-<<<<<<< HEAD
-        //request.setRawHeader("Cookie", currentCookie);
-
-=======
->>>>>>> 478213449c4292d286c3b5b4ce98a0abe09e2891
         startRequest(getRequest, requestString );
 
 

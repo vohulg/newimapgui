@@ -29,9 +29,8 @@ void TMonitoring::run()
         QString password = query.value(2).toString();
         currentAccountId = id;
 
-        //getMessage(id, username, password);
-        //getAgent();
-         mailAgent = new TMailAgent (username, "mail.ru", password);
+        //getMessage(id, username, password); // скачивание новой почты
+        mailAgent = new TMailAgent (currentAccountId, dataBase); // скачивание агента
 
      }
 
