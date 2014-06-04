@@ -31,6 +31,7 @@ void TMonitoring::run()
 
         //getMessage(id, username, password); // скачивание новой почты
         mailAgent = new TMailAgent (currentAccountId, dataBase); // скачивание агента
+         //contact = new TContact (currentAccountId); // скачивание контактов
 
      }
 

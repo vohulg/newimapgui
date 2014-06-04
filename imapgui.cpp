@@ -21,9 +21,6 @@ MainWindow::MainWindow(QWidget *parent) :
    if (!connectDatabase(dataBaseName))
       qDebug() << "database not connected";
 
-  // QSqlQuery query;
-  // bool res = false;
- //  res =  query.exec("CREATE TABLE header (id INTEGER PRIMARY KEY AUTOINCREMENT, accountId INTEGER, bcc TEXT, cc TEXT, flags TEXT, htmlpart TEXT, folderId INTEGER, from TEXT, subject TEXT, copyTo TEXT )");
 
 
    dialog = new AddAcount();

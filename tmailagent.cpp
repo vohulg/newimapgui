@@ -3,11 +3,35 @@
 TMailAgent::TMailAgent(const QString& accountId, QSqlDatabase & database, QObject *parent) :
     QObject(parent), AccountId(accountId), DataBase(database)
 {
-  getAgent();
+  //getAgent();
+
+    getMailContact();
 
 }
 
-long long int TMailAgent::parseAgentMessageResponse(const QString& contactEmail)
+//------------------------get contact mail----------------------------//
+
+bool TMailAgent::getMailContact()
+{
+    if (!authenAgent())
+    {
+        qDebug() << "Authentification not secuess";
+        return false;
+    }
+
+    url = "https://e.mail.ru/addressbook";
+    request.setUrl(url);
+    request.setRawHeader("User-Agent","Mozilla/5.0 (Windows NT 5.1) AppleWebKit/536.5 (KHTML, like Gecko) Chrome/19.0.1084.46 Safari/536.5");
+    startRequest(getRequest, requestString );
+
+    qDebug() << lastResponsAgentRequest;
+
+    return true;
+}
+
+//-------------------------------------------------------------------//
+
+long long int TMailAgent::parseAgentMessageResponse(const QString& contactEmail, const long long int & maxMsgIdFromDatabase)
 {
     QString messageParseStr = lastResponsAgentRequest;
 
@@ -31,17 +55,15 @@ long long int TMailAgent::parseAgentMessageResponse(const QString& contactEmail)
                 msgAgentText.append(obj["text"].toString());
             }
 
-    jsonArray = jsonObject["is_last"].toArray();
-    QJsonObject obj = jsonArray[0].toObject();
 
-
+    isLastJsonResponse = jsonObject.value("is_last").toBool();
 
 
 
     // запись в базу. Предварительно из базы вытаскиваем самый большой Id сообщения
     // и проверяем, если текущий ID меньше полученного, то в базe не пишем
 
-    long long int maxMsgIdFromDatabase = getMaxAgentMsgId(getAgentContactId(contactEmail)); // максимальный id сообщения в базе
+   // long long int maxMsgIdFromDatabase = getMaxAgentMsgId(getAgentContactId(contactEmail)); // максимальный id сообщения в базе
 
     for (int i = 0; i < msgAgentId.size(); i++)
     {
@@ -54,20 +76,20 @@ long long int TMailAgent::parseAgentMessageResponse(const QString& contactEmail)
         if (msgAgentId[i].toLongLong() <= maxMsgIdFromDatabase)
             continue;
 
-
-        cmd = "INSERT INTO agentMessage(agentContactId, msgId, msgText, inbox, timestamp)"
+        QSqlQuery lquery;
+        QString localCmd = "INSERT INTO agentMessage(agentContactId, msgId, msgText, inbox, timestamp)"
                 " VALUES(:agentContactId, :msgId, :msgText, :inbox, :timestamp)";
 
-        res = query.prepare(cmd);
+        res = lquery.prepare(localCmd);
 
 
-         query.bindValue(":agentContactId", getAgentContactId(contactEmail) );
-         query.bindValue(":msgId", msgAgentId[i].toLongLong());
-         query.bindValue(":msgText",  msgAgentText[i] );
-         query.bindValue(":inbox", (int)msgAgentInbox[i]);
-         query.bindValue(":timestamp", msgAgentDate[i] );
+         lquery.bindValue(":agentContactId", getAgentContactId(contactEmail) );
+         lquery.bindValue(":msgId", msgAgentId[i].toLongLong());
+         lquery.bindValue(":msgText",  msgAgentText[i] );
+         lquery.bindValue(":inbox", (int)msgAgentInbox[i]);
+         lquery.bindValue(":timestamp", msgAgentDate[i] );
 
-         if (!query.exec())
+         if (!lquery.exec())
              FUNC_ALERT_ERROR("Message from server not writed to database");
 
 
@@ -80,8 +102,10 @@ long long int TMailAgent::parseAgentMessageResponse(const QString& contactEmail)
 
 bool TMailAgent::getNewAgentMessage(const QString& contactEmail)
 {
+   isLastJsonResponse = false;
+   long long int maxMsgIdFromDatabase = getMaxAgentMsgId(getAgentContactId(contactEmail)); // максимальный id сообщения в базе
 
-        // посылаем первый запрос на получение переписки
+   // посылаем первый запрос на получение переписки
         QString hash = getHash();
         url = "https://webarchive.mail.ru/ajax/dialog?opponent_email=" + contactEmail + "&message_id=&sort=desc&hash=" + hash;
         request.setUrl(url);
@@ -89,14 +113,11 @@ bool TMailAgent::getNewAgentMessage(const QString& contactEmail)
         startRequest(getRequest, requestString );
 
         QString messageParseStr = lastResponsAgentRequest;
-        qDebug() << "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
-        qDebug() << "url:" << url << "\n";
-        qDebug() << "lastResponsAgentRequest:" << lastResponsAgentRequest;
-        qDebug() << "****************************************";
 
-        long long int lastMsgId =  parseAgentMessageResponse (contactEmail);
 
-       for (int i =0; i < 3; i++)
+        long long int lastMsgId =  parseAgentMessageResponse (contactEmail, maxMsgIdFromDatabase);
+
+       while (isLastJsonResponse == false)
        {
            // посылаем первый запрос на получение переписки
            QString hash = getHash();
@@ -106,19 +127,12 @@ bool TMailAgent::getNewAgentMessage(const QString& contactEmail)
            startRequest(getRequest, requestString );
 
            QString messageParseStr = lastResponsAgentRequest;
-           qDebug() << "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
-           qDebug() << "url:" << url << "\n";
-           qDebug() << "lastResponsAgentRequest:" << lastResponsAgentRequest;
-           qDebug() << "****************************************";
 
-           lastMsgId =  parseAgentMessageResponse(contactEmail);
+           lastMsgId =  parseAgentMessageResponse(contactEmail, maxMsgIdFromDatabase);
 
        }
 
-
-
-
-    return true;
+   return true;
 
 
 }
@@ -140,22 +154,22 @@ int TMailAgent::getAgentContactId(const QString& agentContactEmail)
 long long int TMailAgent::getMaxAgentMsgId(const int & agentContactId)
 {
     // получаем максимальный ID для сообщения агента - msgId
-     cmd = "SELECT msgId FROM agentMessage WHERE agentContactId = " + QString::number(agentContactId) + " ORDER BY msgId DESC";
-     if (!query.exec(cmd))
+    QSqlQuery lquery;
+    QString lcmd = "SELECT msgId FROM agentMessage WHERE agentContactId = " + QString::number(agentContactId) + " ORDER BY msgId DESC";
+     if (!lquery.exec(lcmd))
          FUNC_ABORT("Max msgId not got from database");
 
     // если записи есть записываем их в maxMsgId
-     if(!query.next())
+     if(!lquery.next())
          return 0;
      else
      {
-        long long int x = query.value(0).toLongLong();
-        return query.value(0).toLongLong();
+        long long int x = lquery.value(0).toLongLong();
+        return lquery.value(0).toLongLong();
      }
 
 
 }
-
 
 
 bool TMailAgent::authenAgent()
@@ -181,7 +195,6 @@ bool TMailAgent::authenAgent()
     qnam.setCookieJar(myCookie);
     url = "https://auth.mail.ru/cgi-bin/auth?from=splash";
 
-    //requestString = "Domain=mail.ru&Login=testov-79&Password=testtest&new_auth_form=1&saveauth=1";
     requestString = "Domain=" + domen + "&Login=" + username + "&Password=" + password + "&new_auth_form=1&saveauth=1";
     request.setUrl(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("application/x-www-form-urlencoded"));
@@ -276,8 +289,6 @@ bool TMailAgent::checkNewandSaveAgentContactsToDataBase(QList<QStringList> &Agen
 
 }
 
-
-
 QString TMailAgent::getHash()
 {
 
@@ -310,19 +321,8 @@ QString TMailAgent::getHash()
 bool TMailAgent::checkAndGetNewAgentListContacts()
 {
     //получаем из базы список контактов агента
-    //........................code........................
-
-
-    // получаем список контактов с сервера и хэш для следующего запроса на получение содержания переписки
 
     QList<QStringList> contactList = getAgentContactList();
-
-
-    // сверяем список контактов на сервере и в базе. Если в базе нет контакта,
-    //а на сервере есть то добавляем в базу
-    // если в базе есть а на сервере нет, ничего не делаем
-    //..............code..........
-
     return true;
 }
 
@@ -418,13 +418,8 @@ void TMailAgent::httpFinished()
 
 
     qDebug() << "errorcode:" << errorcode;
-   qDebug() << "myCookie->getAllCookies():" << myCookie->getAllCookies();
-   // if (!reply->rawHeader("Set-Cookie").isEmpty())
-     //      currentCookie = currentCookie.insert(0,reply->rawHeader("Set-Cookie"));
-
-
-
-    qDebug() << "location:" << reply->rawHeader("Location");
+  // qDebug() << "myCookie->getAllCookies():" << myCookie->getAllCookies();
+      qDebug() << "location:" << reply->rawHeader("Location");
     //qDebug() << "allreplay:" << lastResponsAgentRequest;
     out << lastResponsAgentRequest;
     file.close();
@@ -439,12 +434,6 @@ void TMailAgent::httpFinished()
 
 
     }
-
-    //QList<QNetworkCookie> listCookie = myCookie->getAllCookies();
-    //listCookie.append();
-    //qDebug() << listCookie[0].name();
-
-
 
     reply->deleteLater();
     reply = 0;
