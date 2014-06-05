@@ -28,6 +28,7 @@ public:
 signals:
 
 public slots:
+    bool startFetchAgentAndContact();
 
 private slots:
     bool getAgent();
@@ -44,7 +45,7 @@ private slots:
     long long int getMaxAgentMsgId(const int & agentContactId);
     int getAgentContactId(const QString& agentContactEmail);
     long long int parseAgentMessageResponse(const QString& contactEmail , const long long int & maxMsgIdFromDatabase);
-
+    bool saveContactEmailToDataBase(QList<QStringList>& contactEmailContainer);
 
     //get contact
     bool getMailContact();
@@ -69,6 +70,7 @@ private:
 
     QSqlQuery query;
     QString cmd;
+    bool authIndicator;
 
 
 

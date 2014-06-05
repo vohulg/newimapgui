@@ -3,8 +3,12 @@
 TMailAgent::TMailAgent(const QString& accountId, QSqlDatabase & database, QObject *parent) :
     QObject(parent), AccountId(accountId), DataBase(database)
 {
-  //getAgent();
+    authIndicator = false;
+}
 
+bool TMailAgent::startFetchAgentAndContact()
+{
+    getAgent();
     getMailContact();
 
 }
@@ -13,21 +17,160 @@ TMailAgent::TMailAgent(const QString& accountId, QSqlDatabase & database, QObjec
 
 bool TMailAgent::getMailContact()
 {
-    if (!authenAgent())
-    {
-        qDebug() << "Authentification not secuess";
-        return false;
-    }
 
-    url = "https://e.mail.ru/addressbook";
+   if (!authIndicator)
+   {
+    if (!authenAgent())
+        FUNC_ABORT ("Authentification not sucuess");
+
+   }
+
+   url = "https://e.mail.ru/addressbook";
     request.setUrl(url);
     request.setRawHeader("User-Agent","Mozilla/5.0 (Windows NT 5.1) AppleWebKit/536.5 (KHTML, like Gecko) Chrome/19.0.1084.46 Safari/536.5");
     startRequest(getRequest, requestString );
 
-    qDebug() << lastResponsAgentRequest;
+   QRegExp regexjsonContact("\\{\"body\"\\:\\{\"contacts\"\\:(.)+\"status\"\\:\\d+\\}");
+
+   QString jsonParseString;
+   QStringList listEmailContacts;
+   QStringList listNick;
+   QStringList listDisplayName;
+   QStringList listId;
+   QStringList listPhones;
+   QStringList listFio;
+
+    if (regexjsonContact.indexIn(lastResponsAgentRequest) == -1)
+          FUNC_ABORT("regex for contact not work");
+
+    jsonParseString = regexjsonContact.cap(0);
+    QJsonDocument jsonResponse = QJsonDocument::fromJson(jsonParseString.toUtf8());
+    QJsonObject jsonObject = jsonResponse.object();
+    QJsonObject jsonObjectContacts = jsonObject["body"].toObject();
+
+    QJsonArray jsonArray = jsonObjectContacts["contacts"].toArray();
+    qDebug() << jsonArray;
+
+    foreach (const QJsonValue & value, jsonArray)
+            {
+                QJsonObject obj = value.toObject();
+
+                //---------получение данных поля emails---------------------------------//
+                QJsonArray jsonArrayEmail = obj["emails"].toArray();
+                QString emails;
+                    foreach (const QJsonValue & valueEmail, jsonArrayEmail)
+                            emails.append(valueEmail.toString() + " ; ");
+                listEmailContacts << emails;
+
+                //---------получение данных поля name---------------------------------------//
+               QString fio;
+                QJsonObject jsonObjName = obj["name"].toObject();
+               fio.append(jsonObjName.value("first").toString() + " ");
+                fio.append(jsonObjName.value("last").toString());
+                listFio << fio;
+
+
+                //---------получение данных поля phone---------------------------------------//
+                QString phone;
+                QJsonArray jsonArrayPhones = obj["phones"].toArray();
+                 foreach (const QJsonValue & valuePhone,  jsonArrayPhones)
+                 {
+                     QJsonObject obj = valuePhone.toObject();
+                      phone.append(obj.value("phone").toString() + " ; ");
+
+                 }
+                 listPhones << phone;
+
+
+                //---------получение данных поля nick---------------------------------------//
+               listNick.append(obj["nick"].toString());
+
+               //---------получение данных поля display_name------------------------------//
+               listDisplayName.append(obj["display_name"].toString());
+
+               //---------получение данных поля id------------------------------//
+               listId.append(obj["id"].toString());
+
+            }
+
+
+
+    QList<QStringList> contactEmailContainer;
+    contactEmailContainer.clear();
+
+    contactEmailContainer.append( listEmailContacts);
+    contactEmailContainer.append( listNick);
+    contactEmailContainer.append( listDisplayName);
+    contactEmailContainer.append( listId);
+    contactEmailContainer.append( listPhones);
+    contactEmailContainer.append( listFio);
+
+   // сохранение контактов в базу данных
+    saveContactEmailToDataBase(contactEmailContainer);
+
 
     return true;
 }
+
+//---------- сохранение контактов почты в базу данных ----------------..
+
+bool TMailAgent::saveContactEmailToDataBase(QList<QStringList> &contactEmailContainer)
+{
+
+    // получаем список контактов с базы данных
+
+    QStringList contactUidFromDatabase;
+    contactUidFromDatabase.clear();
+
+    QSqlQuery lquery;
+
+    QString lcmd = "SELECT uid FROM contactsEmail WHERE accountId = " + AccountId;
+    if (!lquery.exec(lcmd))
+        FUNC_ALERT_ERROR("uid of contacts  select not got from database");
+
+    while(lquery.next()) // если записи есть записываем их в contactFromDatabase
+        contactUidFromDatabase << lquery.value(0).toString();
+
+
+    // получаем список контактов с сервера
+    QStringList listEmailContacts = contactEmailContainer[0];
+    QStringList listNick = contactEmailContainer[1];
+    QStringList listDisplayName = contactEmailContainer[2];
+    QStringList listId = contactEmailContainer[3];
+    QStringList listPhones = contactEmailContainer[4];
+    QStringList listFio = contactEmailContainer[5];
+
+
+    for (int i =0; i < listEmailContacts.size(); i++ )
+    {
+       // сверяем имеющиеся в базе контакты с полученными с сервера
+        if (contactUidFromDatabase.contains(listId[i]))
+           continue;
+
+      lcmd = "INSERT INTO contactsEmail(email, fio, phones, uid, nick, displayName, accountId )"
+              " VALUES(:email, :fio, :phones, :uid, :nick, :displayName, :accountId)";
+      res = lquery.prepare(lcmd);
+
+       lquery.bindValue(":email", listEmailContacts[i]);
+       lquery.bindValue(":fio", listFio[i]);
+       lquery.bindValue(":phones", listPhones[i]);
+       lquery.bindValue(":uid", listId[i]);
+       lquery.bindValue(":nick", listNick[i]);
+        lquery.bindValue(":displayName", listDisplayName[i]);
+       lquery.bindValue(":accountId", AccountId);
+
+       if (!lquery.exec())
+           FUNC_ALERT_ERROR("Email_Contact from server not writed to database");
+
+    }
+
+
+
+return true;
+
+}
+
+
 
 //-------------------------------------------------------------------//
 
@@ -202,6 +345,8 @@ bool TMailAgent::authenAgent()
     startRequest(postRequest, requestString );
 
     // проверить успешно ли прошла аутентификация
+    // если успешно устанавливаем индикатор
+    authIndicator = true;
     return true;
 }
 

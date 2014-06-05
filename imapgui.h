@@ -47,6 +47,10 @@ private slots:
     void testing();
     void createTableDataBase();
 
+    void startMonitoring();
+
+    void on_pushButton_clicked();
+
 private:
     Ui::MainWindow *ui;
     QSqlDatabase db;
