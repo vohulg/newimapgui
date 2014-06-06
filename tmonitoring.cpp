@@ -130,16 +130,10 @@ bool TMonitoring::getMessage(const QString& id, const QString& username, const Q
 
 
 
-         QList<int> partMessageList;
-
-         for (int i = 0; i < 12; i++)
-            partMessageList << messageList[i];
-
-
-         if (imap.fetch(mailbox, partMessageList) == NULL)
+         if (imap.fetch(mailbox, messageList) == NULL)
              qDebug() << box <<" not fetched";
 
-         if (!saveToDataBaseHeader(mailbox, partMessageList))
+         if (!saveToDataBaseHeader(mailbox,messageList))
               qDebug() << "Don't saved new messagу in mailbox";
 
 

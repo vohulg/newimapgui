@@ -52,6 +52,14 @@ static QList<ImapAddress> _createAddressList (const QString& addresses) {
         list.append(imapAddress);
     }
 
+    if (list.isEmpty())
+    {
+        ImapAddress defaultImapAddress("no adress");
+        list.append(defaultImapAddress);
+
+    }
+
+
     return(list);
 }
 

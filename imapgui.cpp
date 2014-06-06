@@ -29,6 +29,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
    RefreshAccountsList();
 
+   startMonitoring();
+
 
 
 

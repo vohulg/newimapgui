@@ -217,9 +217,9 @@ bool ImapPrivate::setFlag (int uid, const QString& flag, bool append) {
 }
 
 bool ImapPrivate::sendDataLine (const QString& data) {
-#ifdef IMAP_DEBUG
+
     qDebug() << "sendDataLine()" << data;
-#endif
+
 
     responseErrorMsg.clear();
     socket->write(QString("%1\r\n").arg(data).toLatin1());
@@ -898,7 +898,9 @@ ImapMailbox *Imap::fetch (ImapMailbox *mailbox, const QList<int>& messages) {
     if (!d->sendCommand(QString("UID FETCH %1 FULL").arg(messageList)))
         return(NULL);
 
-    return(d->parseMessages(mailbox));
+    ImapMailbox *mbox = d->parseMessages(mailbox);
+
+    return(mbox);
 }
 
 /**
