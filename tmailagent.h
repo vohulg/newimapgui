@@ -70,7 +70,8 @@ private:
 
     QSqlQuery query;
     QString cmd;
-    bool isLastJsonResponse;
+    bool authIndicator;
+
 
 
 

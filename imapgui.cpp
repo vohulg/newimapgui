@@ -294,11 +294,12 @@ void MainWindow::startMonitoring()
 {
     //======== start loop for monitoring mail, agent and contact================//
 
-    monitorLoop = new TMonitoring();
+    TMonitoring *monitorLoop = new TMonitoring();
+    //connect(monitorLoop, SIGNAL(finished()), this, SLOT(finishMonitoring());
     monitorLoop->setDatabase(db);
     monitorLoop->run();
 
-    //==================================================//
+     //==================================================//
 
 }
 

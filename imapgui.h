@@ -50,6 +50,7 @@ private slots:
     void startMonitoring();
 
     void on_pushButton_clicked();
+    //void finishMonitoring();
 
 private:
     Ui::MainWindow *ui;
@@ -58,7 +59,7 @@ private:
     Imap imap;
     QTableWidget *tableWidget;
     AddAcount *dialog;
-    TMonitoring *monitorLoop;
+    //TMonitoring *monitorLoop;
     QString dataBaseName;
 
 };

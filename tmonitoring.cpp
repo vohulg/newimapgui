@@ -6,6 +6,14 @@ TMonitoring::TMonitoring(QObject *parent) :
 
     encoding << "NoEncoding" << "UnknownEncoding" << "Utf7Encoding" << "Utf8Encoding" << "Base64Encoding" << "QuotedPrintableEncoding";
     lastMsgUid = -1;
+    startRunMonitoring = QDateTime::currentDateTime();
+    loopRepet = 120; // количество секунд через которые идет повторение
+
+}
+
+TMonitoring::~TMonitoring()
+{
+
 
 }
 
@@ -17,33 +25,87 @@ bool TMonitoring::setDatabase(QSqlDatabase &db)
 
 void TMonitoring::run()
 {
+    abortMonitoring = false;
+    // запускаем цикл через определенные промежутки времени
+    while(true)
+    {
+        if (abortMonitoring)
+            break;
+
+        startLoop();
+        sleep(loopRepet);
+    }
+
+}
+
+void TMonitoring::abortLoopMonitoring()
+{
+  abortMonitoring = true;
+
+}
+
+// ------------- запск цикла мониторинга------- //
+
+bool TMonitoring::startLoop()
+{
 
     QSqlQuery query;
-    query.exec("SELECT id, account, password, startMonitor, endMonitor, status FROM accounts;");
+    query.exec("SELECT id, account, password, startMonitor, endMonitor, status FROM accounts ORDER BY startMonitor DESC;");
 
    //================обрабатываем каждый ящик =========================//
+
     while (query.next())
     {
         QString id = query.value(0).toString();
         QString username = query.value(1).toString();
         QString password = query.value(2).toString();
+        QDateTime startTime = query.value(3).toDateTime();
+        QDateTime endTime = query.value(4).toDateTime();
         currentAccountId = id;
 
-        // запуск на скачивание почты
-        getMessage(id, username, password); // скачивание новой почты
+        qint64 secStartTimeMinusStartRunMonitoring =  startTime.secsTo(startRunMonitoring);
+        qint64 secEndTimeMinusStartRunMonitoring =  endTime.secsTo(startRunMonitoring);
+        QDateTime currentDateTime = QDateTime::currentDateTime();
 
-        // запуск на скачивание агента
-        mailAgent = new TMailAgent (currentAccountId, dataBase);
-        mailAgent->startFetchAgentAndContact();
+        // 1 вариант. Время запуска потока меньше начала назначенного старта мониторинга для данного аккаунта
+        if (secStartTimeMinusStartRunMonitoring > 0)
+        {
+            qint64 secBetweenCurTimeAndStartTime = startTime.secsTo(currentDateTime);
+            QTimer::singleShot(secBetweenCurTimeAndStartTime, this, SLOT(startMonitoring(id, username, password)));
+        }
 
+        // 2 вариант время запуска потока больше старта но меньше окончания назначенного времени
+        else if (secEndTimeMinusStartRunMonitoring > 0)
+            QTimer::singleShot(1, this, SLOT(startMonitoring(id, username, password)));
 
-     }
+        // 3 вариант время запуска потока больше и начала и окончания назначенного времени
+        // пропскаем этот аккаунт
+
+        else if (secEndTimeMinusStartRunMonitoring < 0)
+            continue;
+    }
+
+    return true;
+}
+
+bool TMonitoring::startMonitoring(const QString& id, const QString& username, const QString& password)
+{
+    // запуск на скачивание почты
+    getMessage(id, username, password); // скачивание новой почты
+
+    // запуск на скачивание агента и контактов почтового ящика
+    mailAgent = new TMailAgent (currentAccountId, dataBase);
+    mailAgent->startFetchAgentAndContact();
+
+    return true;
 
 }
 
 
+
 bool TMonitoring::getMessage(const QString& id, const QString& username, const QString& password)
 {
+     qDebug() << "Monitoring starting....................";
 
     //=========initializ server value=========//
      QString host = "imap.mail.ru";

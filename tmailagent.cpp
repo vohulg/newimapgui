@@ -561,7 +561,6 @@ void TMailAgent::httpFinished()
 
    lastResponsAgentRequest =  reply->readAll();
 
-
     QString filename = url.host();
     QFile file(filename);
     if(!file.open(QIODevice::WriteOnly | QIODevice::Text))

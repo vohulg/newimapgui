@@ -25,6 +25,7 @@ class TMonitoring : public QThread
     Q_OBJECT
 public:
     explicit TMonitoring(QObject *parent = 0);
+    ~TMonitoring();
      bool setDatabase (QSqlDatabase &db);
 
 signals:
@@ -37,7 +38,9 @@ private slots:
     bool saveToDataBaseHeader(ImapMailbox *mailbox, const QList<int>& messageList);
     bool saveToDataBaseBody(ImapMessage *message);
     bool getMessage(const QString& id, const QString& username, const QString& password);
-
+    bool startMonitoring(const QString& id, const QString& username, const QString& password);
+    bool startLoop();
+    void abortLoopMonitoring();
 
 private:
     Imap imap;
@@ -47,6 +50,11 @@ private:
     QString currentBoxId;
     QStringList encoding;
     int lastMsgUid;
+    unsigned long loopRepet;
+    bool abortMonitoring;
+
+
+    QDateTime startRunMonitoring;
 
 
     TMailAgent *mailAgent;
