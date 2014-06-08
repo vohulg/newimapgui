@@ -28,10 +28,10 @@ public:
 signals:
 
 public slots:
+    bool startFetchAgentAndContact();
 
 private slots:
     bool getAgent();
-
     bool authenAgent();
     bool checkAndGetNewAgentListContacts();
     QString getHash();
@@ -41,10 +41,14 @@ private slots:
     void httpFinished();
     void startRequest(requestMethod method, QString& strPostRequest );
     bool checkNewandSaveAgentContactsToDataBase(QList<QStringList> &AgentContactList);
+    //long long int getAgentMsgIdFromDatabase(const QString& contactEmail);
     long long int getMaxAgentMsgId(const int & agentContactId);
     int getAgentContactId(const QString& agentContactEmail);
-    long long int parseAgentMessageResponse(const QString& contactEmail);
+    long long int parseAgentMessageResponse(const QString& contactEmail , const long long int & maxMsgIdFromDatabase);
+    bool saveContactEmailToDataBase(QList<QStringList>& contactEmailContainer);
 
+    //get contact
+    bool getMailContact();
 
 private:
 
@@ -62,10 +66,12 @@ private:
 
     QByteArray lastResponsAgentRequest;
     bool res = false;
+    bool isLastJsonResponse;
 
     QSqlQuery query;
     QString cmd;
     bool isLastJsonResponse;
+
 
 
 

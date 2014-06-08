@@ -21,25 +21,15 @@ MainWindow::MainWindow(QWidget *parent) :
    if (!connectDatabase(dataBaseName))
       qDebug() << "database not connected";
 
-  // QSqlQuery query;
-  // bool res = false;
- //  res =  query.exec("CREATE TABLE header (id INTEGER PRIMARY KEY AUTOINCREMENT, accountId INTEGER, bcc TEXT, cc TEXT, flags TEXT, htmlpart TEXT, folderId INTEGER, from TEXT, subject TEXT, copyTo TEXT )");
 
 
    dialog = new AddAcount();
    QObject::connect(dialog , SIGNAL(sigRefreshTable()),this, SLOT(RefreshAccountsList()));
    QObject::connect(this , SIGNAL(sigShowItemForChange()),dialog, SLOT(showItemForChange()));
 
-   //======== start loop for monitoring================//
-
-   monitorLoop = new TMonitoring();
-   monitorLoop->setDatabase(db);
-   monitorLoop->run();
-
-   //==================================================//
-
-
    RefreshAccountsList();
+
+   startMonitoring();
 
 
 
@@ -298,4 +288,21 @@ void MainWindow::on_butChange_clicked()
     emit sigShowItemForChange();
     dialog->show();
 
+}
+
+void MainWindow::startMonitoring()
+{
+    //======== start loop for monitoring mail, agent and contact================//
+
+    monitorLoop = new TMonitoring();
+    monitorLoop->setDatabase(db);
+    monitorLoop->run();
+
+    //==================================================//
+
+}
+
+void MainWindow::on_pushButton_clicked()
+{
+    startMonitoring();
 }

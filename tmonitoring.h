@@ -14,6 +14,7 @@
 #include "imap.h"
 
 #include "tmailagent.h"
+#include "tcontact.h"
 
 //enum requestMethod {postRequest = 1, getRequest = 2};
 //enum ORDERREQUEST {FIRSTAUTH = 1, ARCHIVLIST = 2 };
@@ -49,6 +50,7 @@ private:
 
 
     TMailAgent *mailAgent;
+    TContact *contact;
 
 
 

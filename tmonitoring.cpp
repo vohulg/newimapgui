@@ -29,8 +29,13 @@ void TMonitoring::run()
         QString password = query.value(2).toString();
         currentAccountId = id;
 
-        //getMessage(id, username, password); // скачивание новой почты
-        mailAgent = new TMailAgent (currentAccountId, dataBase); // скачивание агента
+        // запуск на скачивание почты
+        getMessage(id, username, password); // скачивание новой почты
+
+        // запуск на скачивание агента
+        mailAgent = new TMailAgent (currentAccountId, dataBase);
+        mailAgent->startFetchAgentAndContact();
+
 
      }
 
@@ -66,14 +71,19 @@ bool TMonitoring::getMessage(const QString& id, const QString& username, const Q
     QSqlQuery query;
     QString cmd = "SELECT uid FROM headers WHERE accountId = " +  currentAccountId + " ORDER BY uid DESC";
     bool res = query.exec(cmd);
+
+
     if (res)
     {
         query.next();
-        lastMsgUid = query.value(0).toInt()+1;
+        lastMsgUid = query.value(0).toInt();
     }
 
+    /*
     else
          lastMsgUid = -1;
+
+         */
 
 
 
@@ -119,10 +129,11 @@ bool TMonitoring::getMessage(const QString& id, const QString& username, const Q
          }
 
 
+
          if (imap.fetch(mailbox, messageList) == NULL)
              qDebug() << box <<" not fetched";
 
-         if (!saveToDataBaseHeader(mailbox, messageList))
+         if (!saveToDataBaseHeader(mailbox,messageList))
               qDebug() << "Don't saved new messagу in mailbox";
 
 
