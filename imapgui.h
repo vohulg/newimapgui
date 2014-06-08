@@ -48,19 +48,20 @@ private slots:
     void createTableDataBase();
 
     void startMonitoring();
+    void showFolders();
 
     void on_pushButton_clicked();
+
     //void finishMonitoring();
 
 private:
     Ui::MainWindow *ui;
     QSqlDatabase db;
     QSqlQuery query;
-    Imap imap;
     QTableWidget *tableWidget;
     AddAcount *dialog;
-    //TMonitoring *monitorLoop;
     QString dataBaseName;
+    Imap imap;
 
 };
 

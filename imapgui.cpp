@@ -29,7 +29,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
    RefreshAccountsList();
 
-   startMonitoring();
+   showFolders();
+
+   //startMonitoring();
 
 
 
@@ -43,6 +45,7 @@ MainWindow::~MainWindow()
     db.close();
     delete ui;
     delete dialog;
+    query.clear();
 }
 
 void MainWindow::createTableDataBase()
@@ -80,10 +83,8 @@ bool MainWindow::connectDatabase(const QString& database)
  {
     bool res = false;
 
-
     ui->tableWidgetListAccounts->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->tableWidgetListAccounts->setSelectionBehavior(QAbstractItemView::SelectRows);
-
      ui->tableWidgetListAccounts->setColumnCount(5);
      ui->tableWidgetListAccounts->setColumnWidth(0,50);
      ui->tableWidgetListAccounts->setColumnWidth(1,200);
@@ -303,7 +304,34 @@ void MainWindow::startMonitoring()
 
 }
 
+// запуск мониторинга
 void MainWindow::on_pushButton_clicked()
 {
     startMonitoring();
 }
+
+void MainWindow::showFolders()
+{
+
+
+    // создаем новый итем (пусть сначала базовый)
+    QTreeWidgetItem *topLevelAccountItem=new QTreeWidgetItem(ui->treeWidgetFolders);
+    // вешаем его на наше дерево в качестве топ узла.
+    ui->treeWidgetFolders->addTopLevelItem(topLevelAccountItem);
+    // укажем текст итема
+    topLevelAccountItem->setText(0,"info@mail.ru");
+    // создаем новый итем и сразу вешаем его на наш базовый
+    QTreeWidgetItem *item=new QTreeWidgetItem(topLevelAccountItem);
+    // укажем текст итема
+    item->setText(0,"INBOX");
+
+    QTreeWidgetItem *topLevelAccountItem2=new QTreeWidgetItem(ui->treeWidgetFolders);
+    // вешаем его на наше дерево в качестве топ узла.
+    ui->treeWidgetFolders->addTopLevelItem(topLevelAccountItem2);
+    // укажем текст итема
+    topLevelAccountItem2->setText(0,"mail@mail.ru");
+
+
+}
+
+

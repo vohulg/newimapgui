@@ -24,7 +24,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -84,6 +84,24 @@
      <attribute name="title">
       <string>Просмотр </string>
      </attribute>
+     <widget class="QTreeWidget" name="treeWidgetFolders">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>10</y>
+        <width>221</width>
+        <height>181</height>
+       </rect>
+      </property>
+      <property name="columnCount">
+       <number>1</number>
+      </property>
+      <column>
+       <property name="text">
+        <string notr="true">1</string>
+       </property>
+      </column>
+     </widget>
     </widget>
    </widget>
   </widget>
@@ -93,7 +111,7 @@
      <x>0</x>
      <y>0</y>
      <width>741</width>
-     <height>18</height>
+     <height>20</height>
     </rect>
    </property>
   </widget>
