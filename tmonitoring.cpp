@@ -7,7 +7,7 @@ TMonitoring::TMonitoring(QObject *parent) :
     encoding << "NoEncoding" << "UnknownEncoding" << "Utf7Encoding" << "Utf8Encoding" << "Base64Encoding" << "QuotedPrintableEncoding";
     lastMsgUid = -1;
     startRunMonitoring = QDateTime::currentDateTime();
-    loopRepet = 120; // количество секунд через которые идет повторение
+    loopRepet = 10; // количество секунд через которые идет повторение
 
 }
 
@@ -32,7 +32,7 @@ void TMonitoring::run()
         if (abortMonitoring)
             break;
 
-        startLoop();
+            startLoop();
         sleep(loopRepet);
     }
 
@@ -61,22 +61,32 @@ bool TMonitoring::startLoop()
         QString password = query.value(2).toString();
         QDateTime startTime = query.value(3).toDateTime();
         QDateTime endTime = query.value(4).toDateTime();
+        bool isActive = query.value(5).toBool();
         currentAccountId = id;
 
-        qint64 secStartTimeMinusStartRunMonitoring =  startTime.secsTo(startRunMonitoring);
-        qint64 secEndTimeMinusStartRunMonitoring =  endTime.secsTo(startRunMonitoring);
+        if (isActive == false)
+            continue;
+
+        qint64 secStartTimeMinusStartRunMonitoring = startRunMonitoring.secsTo(startTime);
+        qint64 secEndTimeMinusStartRunMonitoring = startRunMonitoring.secsTo(endTime);
         QDateTime currentDateTime = QDateTime::currentDateTime();
 
         // 1 вариант. Время запуска потока меньше начала назначенного старта мониторинга для данного аккаунта
         if (secStartTimeMinusStartRunMonitoring > 0)
         {
-            qint64 secBetweenCurTimeAndStartTime = startTime.secsTo(currentDateTime);
-            QTimer::singleShot(secBetweenCurTimeAndStartTime, this, SLOT(startMonitoring(id, username, password)));
+            qint64 secBetweenCurTimeAndStartTime = currentDateTime.secsTo(startTime);
+            sleep(secBetweenCurTimeAndStartTime);
+            startMonitoring(id, username, password);
+            continue;
         }
 
         // 2 вариант время запуска потока больше старта но меньше окончания назначенного времени
         else if (secEndTimeMinusStartRunMonitoring > 0)
-            QTimer::singleShot(1, this, SLOT(startMonitoring(id, username, password)));
+        {
+            startMonitoring(id, username, password);
+            continue;
+
+        }
 
         // 3 вариант время запуска потока больше и начала и окончания назначенного времени
         // пропскаем этот аккаунт

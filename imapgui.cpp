@@ -6,9 +6,39 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    res = false;
 
-     testing();
+    if (!connectAndCreateDataBase())
+        qDebug() << "DataBase not connected";
 
+   RefreshAccountsList();
+
+   showFolders();
+   //startMonitoring();
+
+   QObject::connect(ui->treeWidgetFolders, SIGNAL(itemClicked(QTreeWidgetItem*,int)), this, SLOT(showMessage(QTreeWidgetItem*,int)));
+
+
+}
+
+void MainWindow::showMessage(QTreeWidgetItem* selectedItem,int column)
+{
+
+    QMessageBox msgBox;
+    msgBox.setWindowTitle("title");
+    //msgBox.setText(selectedItem->text(column));
+     msgBox.setText(QString::number(selectedItem->type()));
+    msgBox.exec();
+
+    //info = QMessageBox::about(this, "Test", selectedItem->text(column));
+
+    //QMessageBox msgBox(QMessageBox::Warning, tr("QMessageBox::warning()"), "Warrning", 0, this);
+   // msgBox.show();
+
+}
+
+bool MainWindow::connectAndCreateDataBase()
+{
     dataBaseName = "dbImap.sqlite";
 
     //===== check if databas not exists create database and all tables======//
@@ -16,28 +46,15 @@ MainWindow::MainWindow(QWidget *parent) :
     if(!file.exists())
         createTableDataBase();
 
-    createTableDataBase();
+    //createTableDataBase();
 
    if (!connectDatabase(dataBaseName))
-      qDebug() << "database not connected";
-
-
+       FUNC_ABORT("database not connected");
 
    dialog = new AddAcount();
    QObject::connect(dialog , SIGNAL(sigRefreshTable()),this, SLOT(RefreshAccountsList()));
    QObject::connect(this , SIGNAL(sigShowItemForChange()),dialog, SLOT(showItemForChange()));
-
-   RefreshAccountsList();
-
-   showFolders();
-
-   //startMonitoring();
-
-
-
-
-
-    //startImap(host, port, useSsl, username, password, loginType);
+   return true;
 }
 
 MainWindow::~MainWindow()
@@ -115,115 +132,6 @@ bool MainWindow::connectDatabase(const QString& database)
           }
 
      return true;
- }
-
-
-// ---------------- start download message from mailbox by imap protocol ---------------------------- //
-
- bool MainWindow::startImap(const QString& host, quint16 port, bool useSsl, const QString& username, const QString& password, Imap::LoginType loginType)
- {
-
-     if (!imap.connectToHost(host, port, useSsl))
-         IMAP_MAIN_ABORT("connectToHost()", imap.errorString());
-
-     if (!imap.login(username, password, loginType ))
-         IMAP_MAIN_ABORT("login()", imap.errorString());
-
-     //qDebug() << imap.list();
-
-
-     ImapMailbox *mailbox = imap.select("INBOX");
-     if (mailbox == NULL)
-         IMAP_MAIN_ABORT("select()", imap.errorString());
-
-     qDebug() << "INBOX";
-     qDebug() << " - Exists:" << mailbox->exists();
-     qDebug() << " - Recent:" << mailbox->recent();
-     qDebug() << " - Unseen:" << mailbox->unseen();
-     qDebug() << " - Is RW:" << mailbox->isReadWrite();
-     qDebug() << " - Flags:" << mailbox->flags();
-
-     //QList<int> messageList = imap.searchText("\"Test mail attachment binary\"");
-    // QList<int> messageList = imap.searchRecentUnseen();
-
-     QList<int> messageList = imap.searchALL();
-     qDebug() << "messageList:" << messageList;
-
-     /*if (imap.fetchHeaders(1) == NULL)
-         IMAP_MAIN_ABORT("fetchHeaders(1)", imap.errorString());
-         */
-
-     if (imap.fetch(mailbox, messageList) == NULL)
-         IMAP_MAIN_ABORT("fetch()", imap.errorString());
-
-
-     if (!saveToDataBase(mailbox, messageList))
-          qDebug() << "Don't saved new messagу in mailbox";
-
-
-     // Detroy Mailbox.
-     delete mailbox;
-
-     if (!imap.logout())
-         IMAP_MAIN_ABORT("logout()", imap.errorString());
-
-     if (!imap.disconnectFromHost())
-         IMAP_MAIN_ABORT("disconnectFromHost()", imap.errorString());
-
-     return true;
- }
-
- //----------------- save to database-------------------//
-
- bool MainWindow::saveToDataBase(ImapMailbox *mailbox, const QList<int>& messageList)
- {
-
-
-     foreach (int msgId, messageList) {
-          ImapMessage *message = mailbox->findByUid(msgId);
-          if (message == NULL) {
-              qDebug() << "Message" << msgId << "Not Found.";
-              continue;
-          }
-
-          if (!imap.fetchBodyStructure(message))
-              IMAP_MAIN_ABORT("fetchBodyStructure()", imap.errorString());
-
-          qDebug() << "ID" << message->id()
-                   << "UID" << message->uid()
-                   << "REF" << message->reference();
-          qDebug() << "FROM" << message->fromAddress().toString();
-          foreach (ImapAddress address, message->toAddresses())
-              qDebug() << " - TO" << address.toString();
-          foreach (ImapAddress address, message->ccAddresses())
-              qDebug() << " - CC" << address.toString();
-          foreach (ImapAddress address, message->bccAddresses())
-              qDebug() << " - BCC" << address.toString();
-          qDebug() << "SUBJECT" << message->subject();
-          qDebug() << "RECIEVED" << message->received();
-          qDebug() << "SENT" << message->sent();
-          qDebug() << "TIMEZONE" << message->timeZone();
-
-
-                 for (int i = 0; i < message->bodyPartCount(); ++i) {
-              ImapMessageBodyPart *bodyPart = message->bodyPartAt(i);
-
-              qDebug() << bodyPart->isAttachment() << bodyPart->bodyPart()
-                       << bodyPart->fileName() << bodyPart->encoding() << bodyPart->contentType();
-
-              if (!imap.fetchBodyPart(message, i))
-                  IMAP_MAIN_ABORT("fetchBodyPart()", imap.errorString());
-
-              //imap.setSeen(message->id(), true);
-              qDebug() << bodyPart->data();
-              qDebug() << "=======================================================";
-
-
-          }
-      }
-
-     return true;
-
  }
 
 
@@ -313,25 +221,154 @@ void MainWindow::on_pushButton_clicked()
 void MainWindow::showFolders()
 {
 
+    ui->treeWidgetFolders->setHeaderLabel("Объекты");
+    QSqlQuery query;
+    query.exec("SELECT  account, id FROM accounts ORDER BY id;");
+    while(query.next())
+    {
+        QString account = query.value(0).toString();
+        QString id = query.value(1).toString();
+        QTreeWidgetItem *topLevelAccountItem=new QTreeWidgetItem(ui->treeWidgetFolders);
+        topLevelAccountItem->setText(0,account);
 
-    // создаем новый итем (пусть сначала базовый)
-    QTreeWidgetItem *topLevelAccountItem=new QTreeWidgetItem(ui->treeWidgetFolders);
-    // вешаем его на наше дерево в качестве топ узла.
-    ui->treeWidgetFolders->addTopLevelItem(topLevelAccountItem);
-    // укажем текст итема
-    topLevelAccountItem->setText(0,"info@mail.ru");
-    // создаем новый итем и сразу вешаем его на наш базовый
-    QTreeWidgetItem *item=new QTreeWidgetItem(topLevelAccountItem);
-    // укажем текст итема
-    item->setText(0,"INBOX");
+        QSqlQuery queryChild;
+        QString cmd = "SELECT  folderName FROM folderMap WHERE accountId =" + id;
+        queryChild.exec(cmd);
+        while(queryChild.next())
+        {
+           QString folderName = queryChild.value(0).toString();
+           QTreeWidgetItem *item=new QTreeWidgetItem(topLevelAccountItem);
 
-    QTreeWidgetItem *topLevelAccountItem2=new QTreeWidgetItem(ui->treeWidgetFolders);
-    // вешаем его на наше дерево в качестве топ узла.
-    ui->treeWidgetFolders->addTopLevelItem(topLevelAccountItem2);
-    // укажем текст итема
-    topLevelAccountItem2->setText(0,"mail@mail.ru");
+           item->setText(0,imapUTF7ToUnicode(folderName));
+        }
 
+    }
 
 }
+
+QString MainWindow::imapUTF7ToUnicode(const QString & input)
+      {
+
+       unsigned char c, i, bitcount;
+       unsigned long ucs4, utf16, bitbuf;
+        unsigned char base64[256],utf8[6];
+       unsigned long srcPtr = 0;
+
+        QByteArray output;
+        QByteArray src = input.toLatin1();
+
+        // Initialize modified base64 decoding table.
+
+        memset(base64, UNDEFINED, sizeof(base64));
+
+      // for (i = 0; i < sizeof(base64chars); ++i)
+      for (i = 0; i < 64; ++i)
+        {
+          base64[(int)base64chars[i]] = i;
+        }
+
+
+        // Loop until end of string.
+       while (srcPtr < src.length())
+        {
+          c = src[(int)srcPtr++];
+
+          // Deal with literal characters and "&-".
+
+          if (c != '&' || src[(int)srcPtr] == '-')
+          {
+            // Encode literally.
+
+            output += c;
+
+            // Skip over the '-' if this is an "&-" sequence.
+
+           if (c == '&')
+             srcPtr++;
+         }
+         else
+         {
+           // Convert modified UTF-7 -> UTF-16 -> UCS-4 -> UTF-8 -> HEX.
+           bitbuf = 0;
+           bitcount = 0;
+           ucs4 = 0;
+
+           while ((c = base64[(unsigned char) src[(int)srcPtr]]) != UNDEFINED)
+          {
+
+             ++srcPtr;
+            bitbuf = (bitbuf << 6) | c;
+            bitcount += 6;
+
+             // Enough bits for an UTF-16 character ?
+
+             if (bitcount >= 16)
+           {
+             bitcount -= 16;
+              utf16 = (bitcount ? bitbuf >> bitcount : bitbuf) & 0xffff;
+
+              // Convert UTF16 to UCS4.
+
+               if (utf16 >= UTF16HIGHSTART && utf16 <= UTF16HIGHEND)
+               {
+                 ucs4 = (utf16 - UTF16HIGHSTART) << UTF16SHIFT;
+                continue;
+             }
+              else if (utf16 >= UTF16LOSTART && utf16 <= UTF16LOEND)
+              {
+                 ucs4 += utf16 - UTF16LOSTART + UTF16BASE;
+               }
+             else
+               {
+                ucs4 = utf16;
+              }
+
+              // Convert UTF-16 range of UCS4 to UTF-8.
+
+               if (ucs4 <= 0x7fUL)
+               {
+                utf8[0] = ucs4;
+               i = 1;
+               }
+              else if (ucs4 <= 0x7ffUL)
+               {
+                 utf8[0] = 0xc0 | (ucs4 >> 6);
+                utf8[1] = 0x80 | (ucs4 & 0x3f);
+                 i = 2;
+               }
+              else if (ucs4 <= 0xffffUL)
+               {
+                utf8[0] = 0xe0 | (ucs4 >> 12);
+                utf8[1] = 0x80 | ((ucs4 >> 6) & 0x3f);
+                 utf8[2] = 0x80 | (ucs4 & 0x3f);
+                 i = 3;
+              }
+               else
+              {
+                 utf8[0] = 0xf0 | (ucs4 >> 18);
+                 utf8[1] = 0x80 | ((ucs4 >> 12) & 0x3f);
+                utf8[2] = 0x80 | ((ucs4 >> 6) & 0x3f);
+                 i = 4;
+               }
+
+               // Copy it.
+               for (c = 0; c < i; ++c)
+               {
+                 output += utf8[c];
+               }
+             }
+           }
+
+           // Skip over trailing '-' in modified UTF-7 encoding.
+
+           if (src[(int)srcPtr] == '-')
+            ++srcPtr;
+         }
+      }
+
+
+       return QString::fromUtf8(output.data());
+
+     }
 
 

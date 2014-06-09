@@ -8,6 +8,8 @@
 #include <QDateTime>
 #include <QtSql>
 #include <QTableWidget>
+#include <QMessageBox>
+#include <QTreeWidgetItem>
 
 #include "imapmailbox.h"
 #include "imapmessage.h"
@@ -20,6 +22,22 @@
 
 #define IMAP_MAIN_ABORT(func, message)     \
     { qDebug() << func << message; return(1); }
+
+
+const char * const base64chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+,";
+
+   enum
+      {
+        UNDEFINED       = 64,
+        MAXLINE         = 76,
+        UTF16MASK       = 0x03FFUL,
+       UTF16SHIFT      = 10,
+       UTF16BASE       = 0x10000UL,
+        UTF16HIGHSTART  = 0xD800UL,
+       UTF16HIGHEND    = 0xDBFFUL,
+       UTF16LOSTART    = 0xDC00UL,
+       UTF16LOEND      = 0xDFFFUL
+      };
 
 namespace Ui {
 class MainWindow;
@@ -38,19 +56,20 @@ signals:
 
 private slots:
     bool RefreshAccountsList();
-
     bool connectDatabase(const QString& database);
-    bool saveToDataBase(ImapMailbox *mailbox, const QList<int>& messages);
-    bool startImap(const QString& host, quint16 port, bool useSsl, const QString& username, const QString& password, Imap::LoginType loginType );
     void on_butChange_clicked();
     void on_buttonAdd_clicked();
     void testing();
     void createTableDataBase();
+    bool connectAndCreateDataBase();
 
     void startMonitoring();
     void showFolders();
 
     void on_pushButton_clicked();
+    QString imapUTF7ToUnicode(const QString & input);
+
+    void showMessage(QTreeWidgetItem*,int);
 
     //void finishMonitoring();
 
@@ -61,7 +80,10 @@ private:
     QTableWidget *tableWidget;
     AddAcount *dialog;
     QString dataBaseName;
-    Imap imap;
+    bool res;
+
+   //QList<QTreeWidgetItem> listFolder;
+
 
 };
 

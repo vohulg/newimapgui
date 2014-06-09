@@ -498,7 +498,7 @@ Imap::Imap()
 }
 
 Imap::~Imap() {
-    disconnectFromHost();
+    //disconnectFromHost();
     delete d;
 }
 
@@ -579,6 +579,7 @@ bool Imap::disconnectFromHost (void) {
     if (d->socket == NULL)
         return(true);
 
+
     if (d->socket->state() == QAbstractSocket::UnconnectedState)
         return(true);
 
@@ -588,6 +589,7 @@ bool Imap::disconnectFromHost (void) {
 
     delete d->socket;
     d->socket = NULL;
+
     return(true);
 }
 
