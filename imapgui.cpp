@@ -17,23 +17,173 @@ MainWindow::MainWindow(QWidget *parent) :
    //startMonitoring();
 
    QObject::connect(ui->treeWidgetFolders, SIGNAL(itemClicked(QTreeWidgetItem*,int)), this, SLOT(showMessage(QTreeWidgetItem*,int)));
+   QObject::connect(ui->tableWidgetListMessage, SIGNAL(itemClicked(QTableWidgetItem*)), this, SLOT(showMessageFull(QTableWidgetItem*)));
 
 
 }
 
+
+void MainWindow::showMessageFull(QTableWidgetItem*)
+{
+   ui->msgBrowser->clear();
+
+    QList<QTableWidgetItem *> list;
+    list = ui->tableWidgetListMessage->selectedItems();
+    QString headerId = list[4]->text();
+
+    QSqlQuery query(db);
+    QString cmd = "SELECT data, encoding FROM body WHERE contentType = 'text/plain' AND headersId =" +  headerId;
+    res = query.exec(cmd);
+    if(query.next())
+    {
+        QString data = query.value(0).toString();
+        QString encoding = query.value(1).toString();
+        if (encoding == "Utf7Encoding")
+            data = imapUTF7ToUnicode(data);
+
+        if (encoding == "Base64Encoding")
+        {
+            QByteArray ba;
+            ba.append(data);
+            data = QByteArray::fromBase64(ba);
+        }
+
+        if (encoding == "QuotedPrintableEncoding")
+        {
+            ;//decode from QuotedPrintableEncoding encoding
+        }
+
+        if (encoding == "Utf8Encoding")
+        {
+            ;//decode from Utf8Encoding encoding
+        }
+
+
+
+        ui->msgBrowser->setText(data);
+
+    }
+
+    // show attach
+
+    ui->tableWidgetAttach->setSelectionMode(QAbstractItemView::SingleSelection);
+    ui->tableWidgetAttach->setSelectionBehavior(QAbstractItemView::SelectRows);
+     ui->tableWidgetAttach->setColumnCount(2);
+     ui->tableWidgetAttach->setColumnWidth(0,50);
+     ui->tableWidgetAttach->setColumnWidth(1,200);
+     ui->tableWidgetAttach->setRowHeight(0, 25);
+
+
+     int n = ui->tableWidgetAttach->rowCount();
+          for( int i = 0; i < n; i++ ) ui->tableWidgetAttach->removeRow( 0 );
+
+          QSqlQuery queryAttach(db);
+          QString cmdAttach = "SELECT filename, id  FROM body WHERE isAttach = 1 AND headersId =" +  headerId;
+          res = queryAttach.exec(cmdAttach);
+
+          while (queryAttach.next())
+          {
+               ui->tableWidgetAttach->insertRow(0);
+               ui->tableWidgetAttach->setItem(0, 0, new QTableWidgetItem(QIcon("attach.jpg"),""));
+               ui->tableWidgetAttach->setItem(0, 1, new QTableWidgetItem(queryAttach.value(0).toString()));
+
+          }
+
+
+}
+
+
+
+   // QGraphicsScene *sense = new QGraphicsScene();
+    //sense->addPixmap(QPixmap("pdf.jpg"));
+    //sense->addText("attach");
+    //ui->widgetAttach->setScene(sense);
+    //ui->labelAttach->setPixmap(QPixmap("pdf.jpg"));
+   // ui->labelAttach->setText("attach");
+
+
+
+
+
+// column это номер столбца на который кликнули. Так как виден один столбец то column будет всегда равен 0
 void MainWindow::showMessage(QTreeWidgetItem* selectedItem,int column)
 {
+   // определяем на чем был произведен клик - на аккаунте или папке, определяем
+    // id аккаунта или папки
+
+   // получаем значение из второго столбца который  содержит тип - что это папка, название аккаунта, контакт или агент
+    column = 1;
+    int identificator = selectedItem->text(column).toInt();
+    if (identificator == FOLDER)
+       ;// return;
+
+   // получаем значение из третьего столба - id folder
+    column = 2;
+    QString folderId = selectedItem->text(column);
+
+    if (identificator == CONTACT)
+    {
+        //showContacts(accountId);
+        return;
+    }
+
+    if (identificator == AGENT)
+    {
+        //showAgent(accountId);
+        return;
+    }
+
+    // заполняем таблицу
+
+    bool res = false;
+
+    ui->tableWidgetListMessage->setSelectionMode(QAbstractItemView::SingleSelection);
+    ui->tableWidgetListMessage->setSelectionBehavior(QAbstractItemView::SelectRows);
+     ui->tableWidgetListMessage->setColumnCount(5);
+     ui->tableWidgetListMessage->setColumnWidth(0,200);
+     ui->tableWidgetListMessage->setColumnWidth(1,200);
+     ui->tableWidgetListMessage->setColumnWidth(2,150);
+     ui->tableWidgetListMessage->setColumnWidth(3,150);
+     //ui->tableWidgetListMessage->setColumnHidden(4, true);
+     ui->tableWidgetListMessage->setHorizontalHeaderItem(0, new QTableWidgetItem(tr("SUBJECT")));
+     ui->tableWidgetListMessage->setHorizontalHeaderItem(1, new QTableWidgetItem(tr("KOMU")));
+     ui->tableWidgetListMessage->setHorizontalHeaderItem(2, new QTableWidgetItem(tr("FROM")));
+     ui->tableWidgetListMessage->setHorizontalHeaderItem(3, new QTableWidgetItem(tr("RECIEVED")));
+
+     int n = ui->tableWidgetListMessage->rowCount();
+          for( int i = 0; i < n; i++ ) ui->tableWidgetListMessage->removeRow( 0 );
+
+          QSqlQuery query(db);
+          QString cmd = "SELECT subject, komu, fr, recieved, id FROM headers WHERE folderName =\'" +  folderId + "\'";
+          res = query.exec(cmd);
+
+          while (query.next())
+          {
+               ui->tableWidgetListMessage->insertRow(0);
+               ui->tableWidgetListMessage->setItem(0, 0, new QTableWidgetItem(query.value(0).toString()));
+               ui->tableWidgetListMessage->setItem(0, 1, new QTableWidgetItem(query.value(1).toString()));
+               ui->tableWidgetListMessage->setItem(0, 2, new QTableWidgetItem(query.value(2).toString()));
+               ui->tableWidgetListMessage->setItem(0, 3, new QTableWidgetItem(query.value(3).toString()));
+               ui->tableWidgetListMessage->setItem(0, 4, new QTableWidgetItem(query.value(4).toString()));
+               ui->tableWidgetListMessage->setRowHeight(0, 25);
+          }
+
+
+
+
+
+
+
+
+
+    /*
 
     QMessageBox msgBox;
     msgBox.setWindowTitle("title");
-    //msgBox.setText(selectedItem->text(column));
-     msgBox.setText(QString::number(selectedItem->type()));
+    msgBox.setText(selectedItem->text(column));
     msgBox.exec();
 
-    //info = QMessageBox::about(this, "Test", selectedItem->text(column));
-
-    //QMessageBox msgBox(QMessageBox::Warning, tr("QMessageBox::warning()"), "Warrning", 0, this);
-   // msgBox.show();
+    */
 
 }
 
@@ -112,7 +262,6 @@ bool MainWindow::connectDatabase(const QString& database)
      ui->tableWidgetListAccounts->setHorizontalHeaderItem(2, new QTableWidgetItem(tr("Start Monitor")));
      ui->tableWidgetListAccounts->setHorizontalHeaderItem(3, new QTableWidgetItem(tr("End Monitor")));
      ui->tableWidgetListAccounts->setHorizontalHeaderItem(4, new QTableWidgetItem(tr("Activ")));
-
 
      int n = ui->tableWidgetListAccounts->rowCount();
           for( int i = 0; i < n; i++ ) ui->tableWidgetListAccounts->removeRow( 0 );
@@ -220,28 +369,48 @@ void MainWindow::on_pushButton_clicked()
 
 void MainWindow::showFolders()
 {
-
+   // ui->treeWidgetFolders->hideColumn(1);
+   // ui->treeWidgetFolders->hideColumn(2);
     ui->treeWidgetFolders->setHeaderLabel("Объекты");
     QSqlQuery query;
     query.exec("SELECT  account, id FROM accounts ORDER BY id;");
     while(query.next())
     {
         QString account = query.value(0).toString();
-        QString id = query.value(1).toString();
+        QString accountId = query.value(1).toString();
         QTreeWidgetItem *topLevelAccountItem=new QTreeWidgetItem(ui->treeWidgetFolders);
-        topLevelAccountItem->setText(0,account);
+        topLevelAccountItem->setText(0,account); // первый столбец название аккаунта
+        // идентификатор чтобы можно было отличить на какое поле кликнул пользователь.
+        //Если 0 - то это название аккаунта, если 1 то это папка, если 3 - агент и если 4 - контакты
+       topLevelAccountItem->setText(1,QString::number(ACCOUNT));
+       // id аккаунта
+        topLevelAccountItem->setText(2,accountId);
 
         QSqlQuery queryChild;
-        QString cmd = "SELECT  folderName FROM folderMap WHERE accountId =" + id;
+        QString cmd = "SELECT  folderName, id FROM folderMap WHERE accountId =" + accountId;
         queryChild.exec(cmd);
         while(queryChild.next())
         {
            QString folderName = queryChild.value(0).toString();
+           QString folderId = queryChild.value(1).toString();
            QTreeWidgetItem *item=new QTreeWidgetItem(topLevelAccountItem);
-
            item->setText(0,imapUTF7ToUnicode(folderName));
+           item->setText(1,QString::number(FOLDER));
+           item->setText(2,folderId);
+           item->setText(3,accountId);
         }
 
+        QTreeWidgetItem *itemContact=new QTreeWidgetItem(topLevelAccountItem);
+        itemContact->setText(0, "Контакты");
+        itemContact->setText(1,QString::number(CONTACT));
+        itemContact->setText(2,QString::number(ACCOUNT));
+        itemContact->setText(3,accountId);
+
+        QTreeWidgetItem *itemAgent=new QTreeWidgetItem(topLevelAccountItem);
+        itemAgent->setText(0, "Архив mail.ruAgent");
+        itemAgent->setText(1,QString::number(AGENT));
+        itemAgent->setText(2,QString::number(ACCOUNT));
+        itemAgent->setText(3,accountId);
     }
 
 }

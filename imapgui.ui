@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>741</width>
-    <height>483</height>
+    <width>1124</width>
+    <height>712</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,8 +19,8 @@
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>991</width>
-      <height>561</height>
+      <width>1191</width>
+      <height>661</height>
      </rect>
     </property>
     <property name="currentIndex">
@@ -89,28 +89,78 @@
        <rect>
         <x>10</x>
         <y>10</y>
-        <width>221</width>
+        <width>251</width>
         <height>401</height>
        </rect>
       </property>
+      <property name="horizontalScrollBarPolicy">
+       <enum>Qt::ScrollBarAlwaysOn</enum>
+      </property>
       <property name="columnCount">
-       <number>1</number>
+       <number>4</number>
       </property>
       <column>
        <property name="text">
         <string notr="true">1</string>
        </property>
       </column>
+      <column>
+       <property name="text">
+        <string notr="true">2</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string notr="true">3</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string notr="true">4</string>
+       </property>
+      </column>
      </widget>
-     <widget class="QTableView" name="tableView">
+     <widget class="QTableWidget" name="tableWidgetListMessage">
       <property name="geometry">
        <rect>
-        <x>230</x>
+        <x>280</x>
         <y>10</y>
-        <width>491</width>
-        <height>251</height>
+        <width>821</width>
+        <height>351</height>
        </rect>
       </property>
+     </widget>
+     <widget class="QTextBrowser" name="msgBrowser">
+      <property name="geometry">
+       <rect>
+        <x>280</x>
+        <y>370</y>
+        <width>821</width>
+        <height>261</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QTableWidget" name="tableWidgetAttach">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>420</y>
+        <width>261</width>
+        <height>201</height>
+       </rect>
+      </property>
+      <property name="editTriggers">
+       <set>QAbstractItemView::AnyKeyPressed|QAbstractItemView::EditKeyPressed</set>
+      </property>
+      <property name="showGrid">
+       <bool>false</bool>
+      </property>
+      <attribute name="horizontalHeaderVisible">
+       <bool>false</bool>
+      </attribute>
+      <attribute name="verticalHeaderVisible">
+       <bool>false</bool>
+      </attribute>
      </widget>
     </widget>
    </widget>
@@ -120,7 +170,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>741</width>
+     <width>1124</width>
      <height>18</height>
     </rect>
    </property>

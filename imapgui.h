@@ -39,6 +39,8 @@ const char * const base64chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrst
        UTF16LOEND      = 0xDFFFUL
       };
 
+   enum {ACCOUNT = 0, FOLDER = 1, CONTACT = 3, AGENT = 4};
+
 namespace Ui {
 class MainWindow;
 }
@@ -70,6 +72,7 @@ private slots:
     QString imapUTF7ToUnicode(const QString & input);
 
     void showMessage(QTreeWidgetItem*,int);
+    void showMessageFull(QTableWidgetItem*);
 
     //void finishMonitoring();
 
