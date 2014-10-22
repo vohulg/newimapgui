@@ -32,20 +32,23 @@ void MainWindow::showMessageFull(QTableWidgetItem*)
     QString headerId = list[4]->text();
 
     QSqlQuery query(db);
-    QString cmd = "SELECT data, encoding FROM body WHERE contentType = 'text/plain' AND headersId =" +  headerId;
+    QString cmd = "SELECT data, encoding, charset FROM body WHERE contentType = 'text/plain' AND headersId =" +  headerId;
     res = query.exec(cmd);
     if(query.next())
     {
         QString data = query.value(0).toString();
         QString encoding = query.value(1).toString();
-        if (encoding == "Utf7Encoding")
-            data = imapUTF7ToUnicode(data);
+        QString charset = query.value(2).toString();
 
         if (encoding == "Base64Encoding")
         {
-            QByteArray ba;
-            ba.append(data);
-            data = QByteArray::fromBase64(ba);
+            // преобзазуем из base64
+            QByteArray res; res.clear();
+            res = QByteArray::fromBase64(data.toLatin1());
+            // приводим к utf-8
+            QTextCodec *codec = QTextCodec::codecForName(charset.toLatin1());
+            data = codec->toUnicode(res);
+
         }
 
         if (encoding == "QuotedPrintableEncoding")
@@ -55,8 +58,16 @@ void MainWindow::showMessageFull(QTableWidgetItem*)
 
         if (encoding == "Utf8Encoding")
         {
-            ;//decode from Utf8Encoding encoding
+
         }
+
+        if (encoding == "Utf7Encoding")
+        {
+
+        }
+
+
+
 
 
 
@@ -364,6 +375,11 @@ void MainWindow::startMonitoring()
 // запуск мониторинга
 void MainWindow::on_pushButton_clicked()
 {
+   ui->lbStatusMonitor->setStyleSheet("QLabel {  color :red; }");
+    ui->lbStatusMonitor->setText("Monitoring is runing............");
+
+
+    ui->pushButton->setEnabled(false);
     startMonitoring();
 }
 

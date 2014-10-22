@@ -23,8 +23,11 @@
       <height>661</height>
      </rect>
     </property>
+    <property name="autoFillBackground">
+     <bool>true</bool>
+    </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -77,6 +80,22 @@
       </property>
       <property name="text">
        <string>Запустить сервер</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="lbStatusMonitor">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>260</y>
+        <width>121</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="autoFillBackground">
+       <bool>true</bool>
+      </property>
+      <property name="text">
+       <string/>
       </property>
      </widget>
     </widget>

@@ -77,6 +77,7 @@ class ImapMessageBodyPartPrivate {
         QString fileName;
         QString charset;
         QString bodyPart;
+        QString dataStr;
 
         bool isAttachment;
         QByteArray data;
@@ -215,6 +216,18 @@ QByteArray ImapMessageBodyPart::data (void) const {
 
 void ImapMessageBodyPart::setData (const QByteArray& data) {
     d->data = data;
+}
+
+QString ImapMessageBodyPart::dataStr (void) const {
+
+   return(d->dataStr);
+
+}
+
+void ImapMessageBodyPart::setDataStr (const QString& dataStr) {
+
+    d->dataStr = dataStr;
+
 }
 
 ImapMessageBodyPart::Encoding ImapMessageBodyPart::encoding (void) const {

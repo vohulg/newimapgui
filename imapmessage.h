@@ -31,6 +31,9 @@ class ImapMessageBodyPart {
         QByteArray data (void) const;
         void setData (const QByteArray& data);
 
+        QString dataStr (void) const;
+        void setDataStr (const QString& dataStr);
+
         Encoding encoding (void) const;
 
         QString bodyPart (void) const;

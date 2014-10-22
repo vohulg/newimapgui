@@ -462,16 +462,25 @@ QByteArray ImapPrivate::parseBodyPart (ImapMessageBodyPart::Encoding encoding) {
     QByteArray response;
     QByteArray data;
 
-    while (!isResponseEnd((response = readLine()))) {
+    while (!isResponseEnd((response = readLine())))
+    {
         response.remove(response.size() - 2, 2);
-        if (encoding == ImapMessageBodyPart::Base64Encoding) {
+
+        if (encoding == ImapMessageBodyPart::Base64Encoding)
+        {
             data += response;
-        } else if (encoding == ImapMessageBodyPart::QuotedPrintableEncoding) {
+        }
+
+        else if (encoding == ImapMessageBodyPart::QuotedPrintableEncoding)
+        {
             if (response.endsWith('=') || response.endsWith(')'))
                 data += response.mid(0, response.size() - 1);
             else
                 data += response + IMAP_MESSAGE_BODY_NEWLINE;
-        } else {
+        }
+
+        else
+        {
             data += response + IMAP_MESSAGE_BODY_NEWLINE;
         }
     }

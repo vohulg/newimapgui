@@ -24,20 +24,7 @@
     { qDebug() << func << message; return(1); }
 
 
-const char * const base64chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+,";
 
-   enum
-      {
-        UNDEFINED       = 64,
-        MAXLINE         = 76,
-        UTF16MASK       = 0x03FFUL,
-       UTF16SHIFT      = 10,
-       UTF16BASE       = 0x10000UL,
-        UTF16HIGHSTART  = 0xD800UL,
-       UTF16HIGHEND    = 0xDBFFUL,
-       UTF16LOSTART    = 0xDC00UL,
-       UTF16LOEND      = 0xDFFFUL
-      };
 
    enum {ACCOUNT = 0, FOLDER = 1, CONTACT = 3, AGENT = 4};
 
@@ -69,7 +56,7 @@ private slots:
     void showFolders();
 
     void on_pushButton_clicked();
-    QString imapUTF7ToUnicode(const QString & input);
+     QString imapUTF7ToUnicode(const QString & input);
 
     void showMessage(QTreeWidgetItem*,int);
     void showMessageFull(QTableWidgetItem*);
