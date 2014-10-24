@@ -57,12 +57,12 @@ private slots:
     bool checkNewFolder(const QString& id, QStringList& currentListMailBox);
     bool saveToDataBaseHeader(ImapMessage *message);
     bool saveToDataBaseBody( ImapMessageBodyPart *bodyPart);
-    bool getMessage(const QString& id, const QString& username, const QString& password);
-    bool startMonitoring(const QString& id, const QString& username, const QString& password);
+    bool getMessage(const QString& id, const QString& username, const QString& password, const QString& imapServer);
+    bool startMonitoring(const QString& id, const QString& username, const QString& password, const QString& imapServer);
     bool startLoop();
     void abortLoopMonitoring();
     unsigned long checkSchedule(const QDateTime& startTime, const QDateTime& endTime);
-    bool connectToHost(const QString& id, const QString& username, const QString& password);
+    bool connectToHost(const QString& id, const QString& username, const QString& password, const QString& imapServer);
 
 private:
     Imap imap;
@@ -78,6 +78,8 @@ private:
     ImapMessage * get_message_header(ImapMailbox *mailbox, int msgId);
     bool parse_message_list(ImapMailbox *mailbox, const QList<int>& messageList);
     ImapMessageBodyPart * get_message_body(ImapMessage *message,int i);
+    QList<int> checkNewMessageInFolder(QList<int> msgListInServer);
+    QList<int> getMsgList(const QString& box);
 
 
 

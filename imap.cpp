@@ -735,7 +735,7 @@ ImapMailbox *Imap::examine (const QString& mailbox) {
 QStringList Imap::list (const QString& directory, const QString& pattern) {
     QByteArray response;
     QStringList folders;
-    //directory = "imap.mail.ru";
+
         
     if (!d->sendCommand("LIST %1 %2", QStringList() << directory << pattern))
         return(folders);    
@@ -1076,7 +1076,8 @@ QList<int> Imap::searchALL (void) {
 
 /** Search for NEW Messages. */
 QList<int> Imap::searchNew (const QString& lastMsgUid) {
-    QString cmd = "UID " + lastMsgUid + ":*";
+    //QString cmd = "UID " + lastMsgUid + ":*";
+    QString cmd = " " + lastMsgUid + ":*";
      return(search(cmd));
 }
 

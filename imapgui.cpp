@@ -19,6 +19,17 @@ MainWindow::MainWindow(QWidget *parent) :
    QObject::connect(ui->treeWidgetFolders, SIGNAL(itemClicked(QTreeWidgetItem*,int)), this, SLOT(showMessage(QTreeWidgetItem*,int)));
    QObject::connect(ui->tableWidgetListMessage, SIGNAL(itemClicked(QTableWidgetItem*)), this, SLOT(showMessageFull(QTableWidgetItem*)));
 
+   QObject::connect(ui->tabWidget, SIGNAL(tabBarClicked(int)), this, SLOT(slotTabBarClicked(int)));
+
+
+}
+
+void MainWindow::slotTabBarClicked(int tabIndex)
+{
+  if (tabIndex == ETAB_FOLDERS)
+      showFolders();
+
+    return;
 
 }
 
@@ -53,7 +64,10 @@ void MainWindow::showMessageFull(QTableWidgetItem*)
 
         if (encoding == "QuotedPrintableEncoding")
         {
-            ;//decode from QuotedPrintableEncoding encoding
+            QString decodedData = QuotedPrintable::decode(data);
+            QTextCodec *codec = QTextCodec::codecForName(charset.toLatin1());
+            data = codec->toUnicode(decodedData.toLatin1());
+
         }
 
         if (encoding == "Utf8Encoding")
@@ -263,7 +277,7 @@ bool MainWindow::connectDatabase(const QString& database)
 
     ui->tableWidgetListAccounts->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->tableWidgetListAccounts->setSelectionBehavior(QAbstractItemView::SelectRows);
-     ui->tableWidgetListAccounts->setColumnCount(5);
+     ui->tableWidgetListAccounts->setColumnCount(6);
      ui->tableWidgetListAccounts->setColumnWidth(0,50);
      ui->tableWidgetListAccounts->setColumnWidth(1,200);
      ui->tableWidgetListAccounts->setColumnWidth(2,150);
@@ -273,12 +287,13 @@ bool MainWindow::connectDatabase(const QString& database)
      ui->tableWidgetListAccounts->setHorizontalHeaderItem(2, new QTableWidgetItem(tr("Start Monitor")));
      ui->tableWidgetListAccounts->setHorizontalHeaderItem(3, new QTableWidgetItem(tr("End Monitor")));
      ui->tableWidgetListAccounts->setHorizontalHeaderItem(4, new QTableWidgetItem(tr("Activ")));
+     ui->tableWidgetListAccounts->setHorizontalHeaderItem(5, new QTableWidgetItem(tr("ImapServer")));
 
      int n = ui->tableWidgetListAccounts->rowCount();
           for( int i = 0; i < n; i++ ) ui->tableWidgetListAccounts->removeRow( 0 );
 
           QSqlQuery query(db);
-          res = query.exec("SELECT id, account, startMonitor, endMonitor, status FROM accounts;");
+          res = query.exec("SELECT id, account, startMonitor, endMonitor, status, imapServer FROM accounts;");
 
           while (query.next())
           {
@@ -288,6 +303,8 @@ bool MainWindow::connectDatabase(const QString& database)
                ui->tableWidgetListAccounts->setItem(0, 2, new QTableWidgetItem(query.value(2).toDateTime().toString()));
                ui->tableWidgetListAccounts->setItem(0, 3, new QTableWidgetItem(query.value(3).toDateTime().toString()));
                ui->tableWidgetListAccounts->setItem(0, 4, new QTableWidgetItem(query.value(4).toString()));
+               ui->tableWidgetListAccounts->setItem(0, 5, new QTableWidgetItem(query.value(5).toString()));
+
                ui->tableWidgetListAccounts->setRowHeight(0, 20);
           }
 
@@ -366,7 +383,8 @@ void MainWindow::startMonitoring()
     TMonitoring *monitorLoop = new TMonitoring();
     //connect(monitorLoop, SIGNAL(finished()), this, SLOT(finishMonitoring());
     monitorLoop->setDatabase(db);
-    monitorLoop->run();
+    monitorLoop->start();
+
 
      //==================================================//
 
@@ -385,11 +403,14 @@ void MainWindow::on_pushButton_clicked()
 
 void MainWindow::showFolders()
 {
-   // ui->treeWidgetFolders->hideColumn(1);
+   ui->treeWidgetFolders->clear();
+    // ui->treeWidgetFolders->hideColumn(1);
    // ui->treeWidgetFolders->hideColumn(2);
     ui->treeWidgetFolders->setHeaderLabel("Объекты");
     QSqlQuery query;
-    query.exec("SELECT  account, id FROM accounts ORDER BY id;");
+    query.exec("SELECT  account, id FROM accounts ORDER BY id ");
+
+
     while(query.next())
     {
         QString account = query.value(0).toString();
@@ -414,6 +435,7 @@ void MainWindow::showFolders()
            item->setText(1,QString::number(FOLDER));
            item->setText(2,folderId);
            item->setText(3,accountId);
+
         }
 
         QTreeWidgetItem *itemContact=new QTreeWidgetItem(topLevelAccountItem);
@@ -427,6 +449,8 @@ void MainWindow::showFolders()
         itemAgent->setText(1,QString::number(AGENT));
         itemAgent->setText(2,QString::number(ACCOUNT));
         itemAgent->setText(3,accountId);
+
+
     }
 
 }

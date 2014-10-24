@@ -17,6 +17,7 @@
 #include "imap.h"
 #include "addacount.h"
 #include "tmonitoring.h"
+#include "quotedprintable.h"
 
 
 
@@ -24,9 +25,9 @@
     { qDebug() << func << message; return(1); }
 
 
+enum ETAB {ETAB_ACCOUNTS = 0, ETAB_FOLDERS = 1};
 
-
-   enum {ACCOUNT = 0, FOLDER = 1, CONTACT = 3, AGENT = 4};
+   enum  {ACCOUNT = 0, FOLDER = 1, CONTACT = 3, AGENT = 4};
 
 namespace Ui {
 class MainWindow;
@@ -60,6 +61,8 @@ private slots:
 
     void showMessage(QTreeWidgetItem*,int);
     void showMessageFull(QTableWidgetItem*);
+
+    void slotTabBarClicked(int);
 
     //void finishMonitoring();
 

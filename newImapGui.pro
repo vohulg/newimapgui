@@ -24,7 +24,9 @@ SOURCES += main.cpp\
     tmonitoring.cpp \
     tmailagent.cpp \
     tmycookiejar.cpp \
-    tcontact.cpp
+    tcontact.cpp \
+    quotedprintable.cpp
+
 
 HEADERS  += imapgui.h \
     imap.h \
@@ -35,7 +37,8 @@ HEADERS  += imapgui.h \
     tmonitoring.h \
     tmailagent.h \
     tmycookiejar.h \
-    tcontact.h
+    tcontact.h \
+    quotedprintable.h
 
 FORMS    += imapgui.ui \
     addacount.ui

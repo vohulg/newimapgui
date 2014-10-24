@@ -7,7 +7,7 @@ TMonitoring::TMonitoring(QObject *parent) :
     encoding << "NoEncoding" << "UnknownEncoding" << "Utf7Encoding" << "Utf8Encoding" << "Base64Encoding" << "QuotedPrintableEncoding";
     lastMsgUid = -1;
     startRunMonitoring = QDateTime::currentDateTime();
-    loopRepet = 10; // количество секунд через которые идет повторение
+    loopRepet = 30; // количество секунд через которые идет повторение
 
 }
 
@@ -25,22 +25,25 @@ bool TMonitoring::setDatabase(QSqlDatabase &db)
 
 void TMonitoring::run()
 {
-   //for debug
-    startLoop();
-
-
-    abortMonitoring = false;
+       abortMonitoring = false;
     // запускаем цикл через определенные промежутки времени
-    /*
-    while(true)
-    {
-        if (abortMonitoring)
-            break;
+       int index = 0;
 
-            startLoop();
+
+   while(!abortMonitoring)
+    {
+
+        qDebug() << "Loop is started............" << "index=" << index;
+        startLoop();
+        qDebug() << "Loop is ended............" << "index=" << index;
         sleep(loopRepet);
+
+       // QThread::sleep(loopRepet);
+        index++;
     }
-*/
+
+
+
 }
 
 void TMonitoring::abortLoopMonitoring()
@@ -55,7 +58,7 @@ bool TMonitoring::startLoop()
 {
 
     QSqlQuery query;
-    query.exec("SELECT id, account, password, startMonitor, endMonitor, status FROM accounts ORDER BY startMonitor DESC;");
+    query.exec("SELECT id, account, password, startMonitor, endMonitor, status, imapServer FROM accounts ORDER BY startMonitor DESC;");
 
    //================обрабатываем каждый ящик =========================//
 
@@ -67,6 +70,7 @@ bool TMonitoring::startLoop()
         QDateTime startTime = query.value(3).toDateTime();
         QDateTime endTime = query.value(4).toDateTime();
         bool isActive = query.value(5).toBool();
+        QString imapServer = query.value(6).toString();
         currentAccountId = id;
 
         if (isActive == false)
@@ -81,10 +85,10 @@ bool TMonitoring::startLoop()
        else
        {
            qDebug() << "Sleeping staus.Monitoring is in waiting mode............................" ;
-           sleep(sleepValue);
+           QThread::sleep(sleepValue);
 
            qDebug() << "Monitoring is started............................" ;
-           startMonitoring(id, username, password);
+           startMonitoring(id, username, password, imapServer);
            qDebug() << "Monitoring is ended..............................." ;
            continue;
        }
@@ -121,14 +125,14 @@ unsigned long  TMonitoring::checkSchedule(const QDateTime& startTime, const QDat
 
 }
 
-bool TMonitoring::startMonitoring(const QString& id, const QString& username, const QString& password)
+bool TMonitoring::startMonitoring(const QString& id, const QString& username, const QString& password, const QString& imapServer)
 {
     // запуск на скачивание почты
-    getMessage(id, username, password); // скачивание новой почты
+    getMessage(id, username, password, imapServer); // скачивание новой почты
 
     // запуск на скачивание агента и контактов почтового ящика
-    mailAgent = new TMailAgent (currentAccountId, dataBase);
-    mailAgent->startFetchAgentAndContact();
+   // mailAgent = new TMailAgent (currentAccountId, dataBase);
+   // mailAgent->startFetchAgentAndContact();
 
     return true;
 
@@ -136,14 +140,19 @@ bool TMonitoring::startMonitoring(const QString& id, const QString& username, co
 
 
 // скачивание почты
-bool TMonitoring::getMessage(const QString& id, const QString& username, const QString& password)
+bool TMonitoring::getMessage(const QString& id, const QString& username, const QString& password, const QString& imapServer)
 {
-     if (!connectToHost(id, username, password))
+     if (!connectToHost(id, username, password, imapServer))
             return false;
-
 
     //-------получаем список ящиков для аккаунта---------//
     listMailBox = imap.list();
+
+    if (listMailBox.isEmpty())
+    {
+        qDebug() << "No boxes in account " << username << " found";
+        return false;
+    }
 
    //----------проверяем на наличие новых папок в ящике. Если появились новые папки добавляем их в базу-----------//
     if (!checkNewFolder(id, listMailBox))
@@ -154,28 +163,17 @@ bool TMonitoring::getMessage(const QString& id, const QString& username, const Q
     QString cmd = "SELECT uid FROM headers WHERE accountId = " +  currentAccountId + " ORDER BY uid DESC";
     bool res = query.exec(cmd);
 
-    if (!query.next())
-        lastMsgUid = NO_MSG_IN_FOLDER; // в базе нет почтовых сообщений для этого ящика
-
-    else
-    {
-      // получаем uid последнего скачанного сообщения в базе для текущего ящика
-        query.previous();
-      lastMsgUid = query.value(0).toInt();
-    }
-
-
     //================проходим по каждой папке, получаем сообщения и записываем их в базу =================================================================================//
 
      foreach (QString box, listMailBox)
-        {
                 parse_folder(box);
-        }
 
 }
+
 //--------------парсим ящик----------------------------//
  bool TMonitoring::parse_folder(const QString& box )
  {
+     // выбираем папку из которой будем извлекать новые письма
      ImapMailbox *mailbox = imap.select(box);
      if (mailbox == NULL)
      {
@@ -184,28 +182,26 @@ bool TMonitoring::getMessage(const QString& id, const QString& username, const Q
      }
 
 
-     QList<int> messageList;
-     if (lastMsgUid == NO_MSG_IN_FOLDER)
-     {
-         messageList = imap.searchALL();
-         qDebug() << box << " messageList:" << messageList;
-     }
-     else
-     {
-         messageList = imap.searchNew(QString("%1").arg(lastMsgUid));
-         qDebug() << box << " messageList:" << messageList;
-     }
-
-    QSqlQuery query;
-
+     // получаем индекс текущей папки
+     QSqlQuery query;
       QString cmd = "SELECT id FROM folderMap WHERE accountId = " +  currentAccountId + " AND folderName = \'" + box + "\'";
       bool res = query.exec(cmd);
      if (res)
      {
          query.next();
          currentBoxId = query.value(0).toString();
-
      }
+
+    // получение массива uid писем для данного ящика
+     QList<int> messageList;
+     messageList.clear();
+     messageList = getMsgList(box);
+     if (messageList.isEmpty())
+         {
+            qDebug() << "Not new message in box or folder is empty";
+            return true;
+         }
+
 
 
      // извлечение почты
@@ -215,9 +211,6 @@ bool TMonitoring::getMessage(const QString& id, const QString& username, const Q
          return false;
      }
 
-    // get_message(mailbox,messageList);
-    // ImapMessage * get_message(ImapMailbox *mailbox, const QList<int>& messageList);
-
      if (!parse_message_list(mailbox,messageList))
           qDebug() << "Don't saved new messagу in mailbox";
 
@@ -226,6 +219,60 @@ bool TMonitoring::getMessage(const QString& id, const QString& username, const Q
      delete mailbox;
 
      return true;
+
+ }
+
+ //-------------------------------------------------------
+QList<int> TMonitoring::getMsgList(const QString& box)
+{
+    // ======запрос на сервер чтобы получить уиды писем лежащих в данной папке
+    QList<int> msgListInServer;
+    msgListInServer = imap.searchALL();
+    qDebug() << "In folder "<< box << "such messages in server:" << msgListInServer;
+
+    if (msgListInServer.isEmpty()) // на сервере в ящике нет ни одного письма
+          return msgListInServer;
+
+    // сверяем какие письма на сервере и какие уже есть в базе
+    QList<int> messageList;
+    messageList.clear();
+    messageList = checkNewMessageInFolder(msgListInServer);
+
+   return messageList;
+}
+
+//--------------------------------
+ QList<int> TMonitoring::checkNewMessageInFolder(QList<int> msgListInServer)
+ {
+     QList<int> newMsgList = msgListInServer;
+
+
+     bool res = false;
+     QSqlQuery query;
+     QString cmd = QString("SELECT uid FROM headers WHERE folderName = %1;").arg(currentBoxId);
+     res = query.exec(cmd);
+
+     if (!query.next()) // no message in database for this box
+     {
+           qDebug() << "no message in database for this box";
+           //newMsgList = msgListInServer;
+     }
+
+     else
+     {
+         query.previous();
+         while (query.next())
+         {
+             int uid = query.value(0).toInt();
+             if (newMsgList.contains(uid))
+                 newMsgList.removeOne(uid);
+
+             continue;
+         }
+
+     }
+
+     return newMsgList;
 
  }
 
@@ -257,7 +304,7 @@ bool TMonitoring::parse_message_list(ImapMailbox *mailbox, const QList<int>& mes
     return true;
  }
 
- //----------извлекаем сообщение------------------
+ //----------извлекаем заголовок сообщение------------------
 ImapMessage * TMonitoring::get_message_header(ImapMailbox *mailbox, int msgId)
  {
      ImapMessage *message = NULL;
@@ -322,7 +369,7 @@ ImapMessageBodyPart * TMonitoring::get_message_body(ImapMessage *message,int i)
     ImapMessageBodyPart *bodyPart = NULL;
     bodyPart = message->bodyPartAt(i);
 
-    qDebug() << bodyPart->isAttachment() << bodyPart->bodyPart() << bodyPart->fileName() << bodyPart->encoding() << bodyPart->contentType();
+    //qDebug() << bodyPart->isAttachment() << bodyPart->bodyPart() << bodyPart->fileName() << bodyPart->encoding() << bodyPart->contentType();
 
 
     if (!imap.fetchBodyPart(message, i))
@@ -330,18 +377,23 @@ ImapMessageBodyPart * TMonitoring::get_message_body(ImapMessage *message,int i)
 
     //imap.setSeen(message->id(), true);
 
-    // проверяем кодировку на utf7 и utf-8
+    // проверяем кодировку на utf7 и utf-8 и декодируем
     QString data;
     data.clear();
+
     if (bodyPart->encoding() == ImapMessageBodyPart::Utf7Encoding || bodyPart->encoding() == ImapMessageBodyPart::Utf8Encoding )
     {
-        QTextCodec *codec = QTextCodec::codecForName(bodyPart->charset().toLatin1());
+         QTextCodec *codec = QTextCodec::codecForName(bodyPart->charset().toLatin1());
         data = codec->toUnicode(bodyPart->data());
         bodyPart->setDataStr(data);
 
     }
     else
+    {
         data.append(bodyPart->data());
+        bodyPart->setDataStr(data);
+    }
+
 
     // проверяем закодировано ли имя файла, если да то разкодируем
     QString fname = bodyPart->fileName() ;
@@ -390,17 +442,17 @@ bool TMonitoring::saveToDataBaseBody( ImapMessageBodyPart *bodyPart)
 
 
  // подключаемся к хосту и аккаунту
-  bool  TMonitoring::connectToHost(const QString& id, const QString& username, const QString& password)
+  bool  TMonitoring::connectToHost(const QString& id, const QString& username, const QString& password, const QString& imapServer)
   {
 
       //=========initializ server value=========//
-      QString host = "imap.mail.ru";
+     // QString host = "imap.mail.ru";
       quint16 port = 993;
       bool useSsl = true;
       Imap::LoginType loginType = Imap::LoginPlain;
       //============================================//
 
-     if (!imap.connectToHost(host, port, useSsl))
+     if (!imap.connectToHost(imapServer, port, useSsl))
      {
          qDebug() << "not connected to server";
          return false;

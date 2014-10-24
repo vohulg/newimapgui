@@ -43,7 +43,7 @@ class Imap {
         ImapMailbox *select  (const QString& mailbox);
         ImapMailbox *examine (const QString& mailbox);
 
-        QStringList list (const QString& directory = "imap.mail.ru",
+        QStringList list (const QString& directory = "/",
                           const QString& pattern = "*");
 
         bool createMailbox (const QString& mailbox);

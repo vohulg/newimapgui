@@ -30,12 +30,13 @@ bool AddAcount::on_buttonBox_accepted()
 
         if (!ItemForChange.isEmpty())
         {
-             cmd = QString("UPDATE accounts SET account = :account, password = :password, startMonitor = :startMonitor, endMonitor = :endMonitor, status = :status WHERE id = %1;").arg(ItemForChange);
+             cmd = QString("UPDATE accounts SET account = :account, password = :password, startMonitor = :startMonitor, endMonitor = :endMonitor, status = :status, imapServer = :imapServer WHERE id = %1;").arg(ItemForChange);
              ItemForChange.clear();
         }
         else
         {
-            cmd = "INSERT INTO accounts(account, password, startMonitor, endMonitor, status) VALUES (:account, :password, :startMonitor, :endMonitor, :status );";
+            cmd = "INSERT INTO accounts(account, password, startMonitor, endMonitor, status, imapServer)"
+                               " VALUES (:account, :password, :startMonitor, :endMonitor, :status, :imapServer)";
             ItemForChange.clear();
         }
 
@@ -45,7 +46,9 @@ bool AddAcount::on_buttonBox_accepted()
         query.bindValue(":startMonitor", uiAdd->dateTimeStartMonitor->dateTime());
         query.bindValue(":endMonitor", uiAdd->dateTimeEndMonitor->dateTime());
         query.bindValue(":status", uiAdd->checkBoxStatus->isChecked());
+        query.bindValue(":imapServer", uiAdd->lineImapServer->text());
         res = query.exec();
+
         emit sigRefreshTable();
         return true;
 }
@@ -57,7 +60,7 @@ bool AddAcount::on_buttonBox_accepted()
 
  void AddAcount::showItemForChange()
  {
-     QString cmd = QString("SELECT account, password, startMonitor, endMonitor, status FROM accounts WHERE id = %1;").arg(ItemForChange);
+     QString cmd = QString("SELECT account, password, startMonitor, endMonitor, status, imapServer FROM accounts WHERE id = %1;").arg(ItemForChange);
 
      QSqlQuery query;
      query.exec(cmd);
@@ -74,6 +77,8 @@ bool AddAcount::on_buttonBox_accepted()
 
          if (query.value(4).toString() == "1")
              uiAdd->checkBoxStatus->setChecked(true);
+
+          uiAdd->lineImapServer->setText(query.value(5).toString());
 
 
 
