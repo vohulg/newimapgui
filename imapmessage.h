@@ -74,7 +74,10 @@ class ImapMessage {
 
         int id (void) const;
         void setId (int id);
-        
+
+        QString fullHeaders();
+        void setFullHeaders(const QString& fullHeaders);
+
         QString uid (void) const;
         void setUid (const QString& uid);
         

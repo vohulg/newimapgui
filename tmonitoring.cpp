@@ -54,6 +54,9 @@ void TMonitoring::abortLoopMonitoring()
 bool TMonitoring::startLoop()
 {
 
+    // for debug
+    getMessage(0, "testov-79@mail.ru", "testtest");
+
     QSqlQuery query;
     query.exec("SELECT id, account, password, startMonitor, endMonitor, status FROM accounts ORDER BY startMonitor DESC;");
 
@@ -146,8 +149,8 @@ bool TMonitoring::getMessage(const QString& id, const QString& username, const Q
     listMailBox = imap.list();
 
    //----------проверяем на наличие новых папок в ящике. Если появились новые папки добавляем их в базу-----------//
-    if (!checkNewFolder(id, listMailBox))
-        qDebug() << "folder not checked";
+    //if (!checkNewFolder(id, listMailBox))
+      //  qDebug() << "folder not checked";
 
     // получаем последний uid сообщения. Если такого нет, значит в базе нет ни одного сообщения с аккаунта
     QSqlQuery query;
@@ -209,11 +212,22 @@ bool TMonitoring::getMessage(const QString& id, const QString& username, const Q
 
 
      // извлечение почты
+     /*
      if (imap.fetch(mailbox, messageList) == NULL)
      {
          qDebug() << box <<" not fetched";
          return false;
      }
+     */
+
+    // цикл по новому парсингу заголовков
+      foreach (int msgId, messageList)
+      {
+         ImapMessage *message = imap.fetchHeaders(msgId);
+         message->setUid(QString::number(msgId));
+         mailbox->addMessage(message);
+      }
+
 
     // get_message(mailbox,messageList);
     // ImapMessage * get_message(ImapMailbox *mailbox, const QList<int>& messageList);

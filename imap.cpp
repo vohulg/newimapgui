@@ -28,6 +28,21 @@
 // ===========================================================================
 //  PRIVATE Functions
 // ===========================================================================
+static bool _imapParseMessageHeaders (const QString& responseText, ImapMessage *message)
+{
+    QString response = responseText;
+
+
+
+
+    // парсим строчку и записываем в message найденные данные
+
+    return true;
+
+}
+
+
+
 static ImapMessage *_imapParseMessage (const QString& responseText) {
     if (!responseText.startsWith('*'))
         return(NULL);
@@ -160,6 +175,7 @@ class ImapPrivate {
 
         ImapMailbox *parseMailbox (const QString& mailboxName);
         ImapMailbox *parseMessages (ImapMailbox *mailbox);
+        ImapMailbox *parseMessageHeader (ImapMailbox *mailbox);
 
         QByteArray parseBodyPart (ImapMessageBodyPart::Encoding encoding);
         QList<ImapMessageBodyPart *> bodyPartSplit (const QByteArray& response);
@@ -387,6 +403,47 @@ ImapMailbox *ImapPrivate::parseMailbox (const QString& mailboxName) {
     
     return(mailbox);
 }
+
+//----------------------------------------------
+ ImapMailbox *ImapPrivate::parseMessageHeader (ImapMailbox *mailbox)
+ {
+     QByteArray response;
+    QByteArray fullHeaders;
+    ImapMessage *message = new ImapMessage;
+
+     int criritVal = 400;
+     int controlCriticVal = 0;
+     while(true)
+     {
+         response.clear();
+         response.append(readLine()); // читаем строчку с сокета
+         // Break if End Response Found.
+         if (isResponseEnd(response) || controlCriticVal > criritVal)
+             break;
+
+         if (response.startsWith('*'))
+             continue;
+
+          fullHeaders.append(response);
+         // парсинг строчки
+         _imapParseMessageHeaders(response.trimmed(), message);
+
+
+         controlCriticVal++;
+
+     }
+
+   qDebug() << fullHeaders ;
+
+
+
+     message->setFullHeaders(fullHeaders);
+  if (message != NULL) mailbox->addMessage(message);
+   return(mailbox);
+ }
+
+//------------------------------------------
+
 
 ImapMailbox *ImapPrivate::parseMessages (ImapMailbox *mailbox) {
     QByteArray response;
@@ -888,10 +945,11 @@ ImapMailbox *Imap::fetch (ImapMailbox *mailbox) {
  * Fetch messages of selected mailbox from 'begin' to 'end'.
  */
 ImapMailbox *Imap::fetch (ImapMailbox *mailbox, int begin, int end) {
-    if (!d->sendCommand(QString("FETCH %1:%2 ALL").arg(begin).arg(end)))
+    // UID FETCH %2 RFC822.HEADER
+    if (!d->sendCommand(QString("UID FETCH %1 RFC822.HEADER").arg(begin)))
         return(NULL);
 
-    return(d->parseMessages(mailbox));
+    return(d->parseMessageHeader(mailbox));
 }
 
 /**

@@ -311,6 +311,7 @@ class ImapMessagePrivate {
         QString uid;
         int size;
         int id;
+        QString fullHeaders;
 };
 
 // ===========================================================================
@@ -372,6 +373,16 @@ int ImapMessage::id (void) const {
 
 void ImapMessage::setId (int id) {
     d->id = id;
+}
+
+QString ImapMessage::fullHeaders()
+{
+    return(d->fullHeaders);
+}
+
+void ImapMessage::setFullHeaders(const QString &fullHeaders)
+{
+    d->fullHeaders = fullHeaders;
 }
 
 
