@@ -28,14 +28,109 @@
 // ===========================================================================
 //  PRIVATE Functions
 // ===========================================================================
-static bool _imapParseMessageHeaders (const QString& responseText, ImapMessage *message)
+static TYPE_HEADER_FIELD _imapParseMessageHeaders (const QString& responseText, ImapMessage *message, TYPE_HEADER_FIELD lastField = -1)
 {
     QString response = responseText;
-
-
-
+    QString regStr = "([A-Za-z-]+):(.*)";
 
     // парсим строчку и записываем в message найденные данные
+    QRegExp rx(regStr);
+     int pos = 0;
+     // если шаблон найден
+     if (rx.indexIn(responseText, pos) != -1)
+     {
+         QString field = rx.cap(1);
+         QString fieldContent = rx.cap(2);
+
+         if (field == "Subject" )
+         {
+             message->setSubject(fieldContent);
+             return SUBJECT;
+         }
+
+         if (field == "From")
+         {
+             message->setAddresses(fieldContent, FROM);
+             return FROM;
+
+         }
+         if (field == "To")
+         {
+             message->setAddresses(fieldContent, TO);
+              return TO;
+
+         }
+         if (field == "Cc"){
+             message->setAddresses(fieldContent, CC);
+              return CC;
+
+         }
+         if (field == "Bcc"){
+             message->setAddresses(fieldContent, BCC);
+             return BCC;
+
+         }
+         if (field == "Reply-To"){
+             message->setAddresses(fieldContent, REPLY);
+             return REPLY;
+
+         }
+         if (field == " ReSent-To"){
+             message->setAddresses(fieldContent, RESENT_TO);
+             return RESENT_TO;
+
+         }
+         if (field == " ReSent-From"){
+             message->setAddresses(fieldContent, RESENT_FROM);
+              return RESENT_FROM;
+         }
+
+
+     }
+
+     // если шаблон не найден
+     else
+     {
+         // это строка не соответствует шаблону
+         // узнать какое поле было последним
+         if ( lastField == -1)
+             return -1;
+
+
+         // прибавить данную строчку к последнему полю
+         if ( lastField == TO)
+         {
+             message->setAddresses( response, TO);
+              return TO;
+
+         }
+         if ( lastField == CC){
+             message->setAddresses( response, CC);
+              return CC;
+
+         }
+         if ( lastField == BCC){
+             message->setAddresses( response, BCC);
+             return BCC;
+
+         }
+         if ( lastField == REPLY){
+             message->setAddresses( response, REPLY);
+             return REPLY;
+
+         }
+         if ( lastField == RESENT_TO){
+             message->setAddresses( response, RESENT_TO);
+             return RESENT_TO;
+
+         }
+         if ( lastField == RESENT_FROM){
+             message->setAddresses( response, RESENT_FROM);
+              return RESENT_FROM;
+         }
+
+
+     }
 
     return true;
 
@@ -413,6 +508,7 @@ ImapMailbox *ImapPrivate::parseMailbox (const QString& mailboxName) {
 
      int criritVal = 400;
      int controlCriticVal = 0;
+     int lastHeaderField = -1; // поле которое парсилось последним
      while(true)
      {
          response.clear();
@@ -426,14 +522,13 @@ ImapMailbox *ImapPrivate::parseMailbox (const QString& mailboxName) {
 
           fullHeaders.append(response);
          // парсинг строчки
-         _imapParseMessageHeaders(response.trimmed(), message);
-
+         lastHeaderField = _imapParseMessageHeaders(response.trimmed(), message, lastHeaderField);
 
          controlCriticVal++;
 
      }
 
-   qDebug() << fullHeaders ;
+   //qDebug() << fullHeaders ;
 
 
 
