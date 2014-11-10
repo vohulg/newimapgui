@@ -501,6 +501,15 @@ QList<ImapAddress> ImapMessage::replyAddresses (void) const {
     return(d->replyAddresses);
 }
 
+void ImapMessage::setAddresses (const QString& Addresses, TYPE_HEADER_FIELD field) {
+
+QString addressStr = Addresses;
+QStringList list = addressStr.split(";");
+
+return;
+
+}
+
 void ImapMessage::setAddresses (const QString& fullAddresses) {
     QString addresses = fullAddresses;
     QString addressList;
