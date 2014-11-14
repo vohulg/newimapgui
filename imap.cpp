@@ -28,7 +28,7 @@
 // ===========================================================================
 //  PRIVATE Functions
 // ===========================================================================
-static TYPE_HEADER_FIELD _imapParseMessageHeaders (const QString& responseText, ImapMessage *message, TYPE_HEADER_FIELD lastField = -1)
+static int _imapParseMessageHeaders (const QString& responseText, ImapMessage *message, int lastField)
 {
     QString response = responseText;
     QString regStr = "([A-Za-z-]+):(.*)";
@@ -93,8 +93,8 @@ static TYPE_HEADER_FIELD _imapParseMessageHeaders (const QString& responseText, 
      {
          // это строка не соответствует шаблону
          // узнать какое поле было последним
-         if ( lastField == -1)
-             return -1;
+         if ( lastField == NO)
+             return NO;
 
 
          // прибавить данную строчку к последнему полю
@@ -132,7 +132,7 @@ static TYPE_HEADER_FIELD _imapParseMessageHeaders (const QString& responseText, 
 
      }
 
-    return true;
+    return NO;
 
 }
 

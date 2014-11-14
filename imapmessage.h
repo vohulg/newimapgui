@@ -4,7 +4,7 @@
 #include <QtGlobal>
 #include <QDateTime>
 
-typedef enum  {FROM, TO, CC, BCC, REPLY, RESENT_TO, RESENT_FROM, SUBJECT} TYPE_HEADER_FIELD;
+enum TYPE_HEADER_FIELD {NO = -1, FROM = 1, TO = 2, CC = 3, BCC = 4, REPLY =5, RESENT_TO = 6, RESENT_FROM =7, SUBJECT = 8} ;
 typedef uint ImapMessageFlags;
 typedef enum {
     None                   = 0,
