@@ -290,12 +290,26 @@ class ImapMessagePrivate {
     public:
         QList<ImapMessageBodyPart *> bodyParts;
 
+        //addresses
         QList<ImapAddress> replyAddresses;
         QList<ImapAddress> bccAddresses;
         QList<ImapAddress> ccAddresses;
         QList<ImapAddress> toAddresses;
         ImapAddress senderAddress;
         ImapAddress fromAddress;
+        // my adresses
+        QStringList replyAddr;
+        QStringList bccAddr;
+        QStringList ccAddr;
+        QStringList toAddr;
+        QStringList senderAddr;
+        QStringList fromAddr;
+        QStringList resentToAddr;
+        QStringList resentFromAddr;
+
+
+
+
 
         ImapMessageFlags flags;
         //QDateTime received;
@@ -501,11 +515,19 @@ QList<ImapAddress> ImapMessage::replyAddresses (void) const {
     return(d->replyAddresses);
 }
 
-void ImapMessage::setAddresses (const QString& Addresses, TYPE_HEADER_FIELD field) {
+void ImapMessage::setAddresses (const QStringList& Addresses, int type) {
 
-QString addressStr = Addresses;
-QStringList list = addressStr.split(";");
-
+switch(type)
+{
+    case TO:  d->toAddr = Addresses;break;
+    case FROM:  d->fromAddr = Addresses;break;
+    case CC:  d->ccAddr = Addresses;break;
+    case BCC:  d->bccAddr = Addresses;break;
+    case REPLY:  d->replyAddr = Addresses;break;
+    case RESENT_TO:  d->resentToAddr = Addresses;break;
+    case RESENT_FROM:  d->resentFromAddr = Addresses;break;
+    default: return;
+}
 return;
 
 }

@@ -4,7 +4,8 @@
 #include <QtGlobal>
 #include <QDateTime>
 
-enum TYPE_HEADER_FIELD {NO = -1, FROM = 1, TO = 2, CC = 3, BCC = 4, REPLY =5, RESENT_TO = 6, RESENT_FROM =7, SUBJECT = 8} ;
+#define ADDRESS_TYPE_COUNT 7
+enum TYPE_HEADER_FIELD {NO = -1, FROM = 0, TO = 1, CC = 2, BCC = 3, REPLY = 4, RESENT_TO = 5, RESENT_FROM = 6, SUBJECT = 7} ;
 typedef uint ImapMessageFlags;
 typedef enum {
     None                   = 0,
@@ -116,7 +117,7 @@ class ImapMessage {
         QList<ImapAddress> bccAddresses (void) const;
         QList<ImapAddress> replyAddresses (void) const;
         void setAddresses (const QString& addresses);
-        void setAddresses (const QString& addresses, TYPE_HEADER_FIELD field);
+        void setAddresses (const QStringList& addresses, int type);
 
         bool hasHtmlPart (void) const;
         int htmlPartIndex (void) const;
